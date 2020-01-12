@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configuration debug="false">
+<configuration>
 
     <!--添加监听，可以动态传入变量-->
     <contextListener class="com.zmz.config.LoggerStartupListener"/>
@@ -20,7 +20,7 @@
             <charset>UTF-8</charset>
         </encoder>
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>info</level>
+            <level>debug</level>
         </filter>
     </appender>
     <appender name="ASYNC_CONSOLE" class="ch.qos.logback.classic.AsyncAppender">
