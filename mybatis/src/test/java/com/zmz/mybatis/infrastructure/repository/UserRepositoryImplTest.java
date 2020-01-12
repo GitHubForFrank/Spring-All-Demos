@@ -1,7 +1,7 @@
 package com.zmz.mybatis.infrastructure.repository;
 
+import com.zmz.mybatis.domain.model.UserModel;
 import com.zmz.mybatis.domain.repository.UserRepository;
-import com.zmz.mybatis.infrastructure.dao.entity.User;
 import org.junit.Test;
 
 import java.util.List;
@@ -13,18 +13,42 @@ import java.util.List;
 public class UserRepositoryImplTest {
 
     @Test
-    public void can_run_selectByPrimaryKey() {
+    public void can_run_create() {
         UserRepository userRepository = new UserRepositoryImpl();
-        User user = userRepository.selectByPrimaryKey(34L);
-        System.out.println(user.toString());
+        UserModel userModel = new UserModel();
+        userModel.setName("Name01");
+        userModel.setDept("Dept01");
+        userModel.setPhone("Phone01");
+        userModel.setWebsite("Websit01");
+        userRepository.create(userModel);
+    }
+
+    @Test
+    public void can_run_delete() {
+        UserRepository userRepository = new UserRepositoryImpl();
+        userRepository.delete(2L);
+    }
+
+    @Test
+    public void can_run_queryById() {
+        UserRepository userRepository = new UserRepositoryImpl();
+        UserModel userModel = userRepository.queryById(1L);
+        System.out.println(userModel.toString());
+    }
+
+    @Test
+    public void can_run_updateUser() {
+        UserRepository userRepository = new UserRepositoryImpl();
+        UserModel userModel = userRepository.queryById(1L);
+        userModel.setWebsite(userModel.getWebsite()+"00");
+        userRepository.updateUser(userModel);
     }
 
     @Test
     public void can_run_queryAllUser() {
         UserRepository userRepository = new UserRepositoryImpl();
-        List<User> list = userRepository.queryAllUser();
+        List<UserModel> list = userRepository.queryAllUser();
         System.out.println(list.size());
     }
-
 
 }

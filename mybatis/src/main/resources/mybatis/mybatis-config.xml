@@ -7,10 +7,10 @@
 
     <typeAliases>
         <!-- 别名方式1，一个一个的配置 type中放置的是类的全路径，alias中放置的是类别名
-        <typeAliase type="com.mybatis.demo.Entity.User" alias="UserBean"/> -->
+        <typeAliase type="com.mybatis.demo.Entity.UserEntity" alias="UserBean"/> -->
         <!-- 别名方式2，自动扫描，将JAVA类的类名作为类的类别名 -->
         <!--<package name="com.mybatis.demo.Entity"/>-->
-        <typeAlias alias="User" type="com.zmz.mybatis.infrastructure.dao.entity.User"/>
+        <typeAlias alias="User" type="com.zmz.mybatis.infrastructure.dao.entity.UserEntity"/>
     </typeAliases>
 
     <!-- 配置mybatis运行环境 -->

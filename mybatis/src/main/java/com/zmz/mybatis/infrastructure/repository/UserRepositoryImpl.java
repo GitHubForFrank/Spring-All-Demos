@@ -1,9 +1,11 @@
 package com.zmz.mybatis.infrastructure.repository;
 
-import com.zmz.mybatis.constants.MybatisConstant;
+import com.zmz.mybatis.domain.model.UserModel;
 import com.zmz.mybatis.domain.repository.UserRepository;
+import com.zmz.mybatis.helper.RepositoryHelper;
 import com.zmz.mybatis.helper.RepositoryHelperImpl;
-import com.zmz.mybatis.infrastructure.dao.entity.User;
+import com.zmz.mybatis.infrastructure.dao.entity.UserEntity;
+import com.zmz.mybatis.infrastructure.translator.UserTranslator;
 
 import java.util.List;
 
@@ -13,16 +15,36 @@ import java.util.List;
  */
 public class UserRepositoryImpl implements UserRepository {
 
-    private RepositoryHelperImpl repositoryHelper = new RepositoryHelperImpl(MybatisConstant.MYBATIS_CONFIG_FILE_PATH);
+    RepositoryHelper repositoryHelper = RepositoryHelperImpl.getInstance();
+    private UserTranslator userTranslator = new UserTranslator();
 
     @Override
-    public User selectByPrimaryKey(Long id) {
-        return repositoryHelper.selectOne(User.class,"selectByPrimaryKey",id);
+    public UserModel queryById(long id) {
+        UserEntity userEntity = repositoryHelper.selectOne(UserEntity.class,"selectByPrimaryKey",id);
+        return userTranslator.E2VO(userEntity,null);
     }
 
     @Override
-    public List<User> queryAllUser() {
-        return repositoryHelper.selectList(User.class,"queryAllUser",null);
+    public void create(UserModel userModel) {
+        UserEntity userEntity = userTranslator.VO2E(null,userModel);
+        repositoryHelper.insertObject(UserEntity.class,"insert",userEntity);
+    }
+
+    @Override
+    public void delete(long id) {
+        repositoryHelper.deleteObject(UserEntity.class,"deleteById",id);
+    }
+
+    @Override
+    public void updateUser(UserModel userModel) {
+        UserEntity userEntity = userTranslator.VO2E(null,userModel);
+        repositoryHelper.updateObject(UserEntity.class,"updateByPrimaryKeySelective",userEntity);
+    }
+
+    @Override
+    public List<UserModel> queryAllUser() {
+        List<UserEntity> entityList = repositoryHelper.selectList(UserEntity.class,"queryAllUser",null);
+        return userTranslator.E2VOs(entityList,null);
     }
 
 

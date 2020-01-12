@@ -1,6 +1,6 @@
 package com.zmz.mybatis.infrastructure.dao.mapper;
 
-import com.zmz.mybatis.infrastructure.dao.entity.User;
+import com.zmz.mybatis.infrastructure.dao.entity.UserEntity;
 
 import java.util.List;
 
@@ -13,8 +13,10 @@ import java.util.List;
  */
 public interface UserMapper {
 
-    User selectByPrimaryKey(Long id);
-
-    List<User> queryAllUser();
+    void insert(UserEntity user);
+    void deleteById(Long id);
+    void updateByPrimaryKeySelective(UserEntity user);
+    UserEntity selectByPrimaryKey(Long id);
+    List<UserEntity> queryAllUser();
 
 }

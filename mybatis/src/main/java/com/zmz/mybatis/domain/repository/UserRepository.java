@@ -1,6 +1,6 @@
 package com.zmz.mybatis.domain.repository;
 
-import com.zmz.mybatis.infrastructure.dao.entity.User;
+import com.zmz.mybatis.domain.model.UserModel;
 
 import java.util.List;
 
@@ -9,9 +9,9 @@ import java.util.List;
  * @create 2020-01-03 22:55
  */
 public interface UserRepository {
-
-    User selectByPrimaryKey(Long id);
-    List<User> queryAllUser();
-
-
+    void create(UserModel userModel);
+    void delete(long id);
+    void updateUser(UserModel userModel);
+    UserModel queryById(long id);
+    List<UserModel> queryAllUser();
 }
