@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zmz.infrastructure.dao.mapper.UserMapper">
+
+    <resultMap id="BaseResultMap" type="com.zmz.infrastructure.dao.entity.UserEntity">
+        <id column="id" jdbcType="BIGINT" property="id" />
+        <result column="name" jdbcType="VARCHAR" property="name" />
+        <result column="dept" jdbcType="VARCHAR" property="dept" />
+        <result column="phone" jdbcType="VARCHAR" property="phone" />
+        <result column="website" jdbcType="VARCHAR" property="website" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, name, dept, phone, website
+    </sql>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from tbl_user
+        where id = #{id,jdbcType=BIGINT}
+    </select>
+
+    <select id="queryAllUser" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from tbl_user order by 1
+    </select>
+
+    <insert id="insert" parameterType="com.zmz.infrastructure.dao.entity.UserEntity">
+        insert into tbl_user ( name, dept,
+        phone, website)
+        values (#{name,jdbcType=VARCHAR}, #{dept,jdbcType=VARCHAR},
+        #{phone,jdbcType=VARCHAR}, #{website,jdbcType=VARCHAR})
+    </insert>
+
+    <delete id="delete" parameterType="java.lang.Long">
+        delete from tbl_user where id = #{id,jdbcType=BIGINT}
+    </delete>
+
+    <update id="updateByPrimaryKeySelective" parameterType="com.zmz.infrastructure.dao.entity.UserEntity">
+        update tbl_user
+        <set>
+            <if test="name != null">
+                name = #{name,jdbcType=VARCHAR},
+            </if>
+            <if test="dept != null">
+                dept = #{dept,jdbcType=VARCHAR},
+            </if>
+            <if test="phone != null">
+                phone = #{phone,jdbcType=VARCHAR},
+            </if>
+            <if test="website != null">
+                website = #{website,jdbcType=VARCHAR},
+            </if>
+        </set>
+        where id = #{id,jdbcType=BIGINT}
+    </update>
+</mapper>
