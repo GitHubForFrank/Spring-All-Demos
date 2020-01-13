@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts PUBLIC
+		"-//Apache Software Foundation//DTD Struts Configuration 2.5//EN"
+		"http://struts.apache.org/dtds/struts-2.5.dtd">
+<struts>
+	<!-- 2.5版本的struts2需要手动开启 https://blog.csdn.net/qq_41063141/article/details/88721547 -->
+	<constant name="struts.enable.DynamicMethodInvocation" value="false"/>
+	<constant name="struts.devMode" value="false"></constant>
+
+	<constant name="struts.custom.i18n.resources" value="i18n"></constant>
+	<constant name="struts.configuration.xml.reload" value="true" />
+
+	<!--主题设置成simple的时候，struts标签中的label不生效，暂时采用默认值-->
+	<!--<constant name="struts.ui.theme" value="simple" />-->
+
+	<!--
+	IDEA中编辑此配置文件，extends 显示红色解决方案：
+	File -> Project Structure -> Facets -> Struts -> 选中处理选择此xml配置，将其他的struts的配置文件也选中
+	参考网站 ： https://blog.csdn.net/ivasox/article/details/51798651
+	目前还没有找到解决class后面报红的方案，估计需要引入struts的某些jar
+	-->
+
+	<package name="default" namespace="/" extends="struts-default" strict-method-invocation="false">
+
+		<!--配置全局的结果视图,例如登录和退出或者报错的时候的时候会用到全局变量-->
+		<global-results>
+			<result name="login" type="redirect">/jsps/user_edit.jsp</result>
+		</global-results>
+
+		<!-- 2.5 版本的Struts2必须如下有关methods的配置，可以通过*代替所有，也可以将方法逐个拼写，用都好分割-->
+		<!-- <global-allowed-methods>login,toUpdate,doUpdate</global-allowed-methods>-->
+		<global-allowed-methods>*</global-allowed-methods>
+
+		<action name="user_*" class="userAction" method="{1}">
+			<result name="loginSuccess">/jsps/user_edit.jsp</result>
+			<result name="update">/jsps/user_edit.jsp</result>
+		</action>
+
+	</package>
+
+</struts>
