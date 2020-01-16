@@ -25,7 +25,6 @@
         delete from tbl_user where id = #{id,jdbcType=BIGINT}
     </delete>
 
-
     <update id="updateByPrimaryKeySelective" parameterType="com.zmz.app.infrastructure.dao.entity.UserEntity">
         update tbl_user
         <set>

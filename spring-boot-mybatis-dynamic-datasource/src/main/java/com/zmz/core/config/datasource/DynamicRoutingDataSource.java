@@ -16,4 +16,5 @@ public class DynamicRoutingDataSource extends AbstractRoutingDataSource {
         log.info("当前数据源是：{}", dataSourceName);
         return DynamicDataSourceContextHolder.getDataSourceRouterKey();
     }
+    
 }

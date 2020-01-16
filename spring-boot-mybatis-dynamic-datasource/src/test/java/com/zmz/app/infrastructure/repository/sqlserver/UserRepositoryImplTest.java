@@ -33,7 +33,7 @@ public class UserRepositoryImplTest {
     }
 
     @Test
-    public void test_can_query2(){
+    public void test_can_create(){
         UserModel userModel = new UserModel();
         userModel.setName("99999");
         userModel.setDept("123");
