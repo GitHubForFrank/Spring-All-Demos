@@ -23,17 +23,17 @@
 	<package name="default" namespace="/" extends="struts-default" strict-method-invocation="false">
 
 		<!--配置全局的结果视图,例如登录和退出或者报错的时候的时候会用到全局变量-->
-		<global-results>
-			<result name="login" type="redirect">/jsps/user_edit.jsp</result>
-		</global-results>
+<!--		<global-results>-->
+<!--			<result name="login" type="redirect">/jsps/user_edit.jsp</result>-->
+<!--		</global-results>-->
 
 		<!-- 2.5 版本的Struts2必须如下有关methods的配置，可以通过*代替所有，也可以将方法逐个拼写，用都好分割-->
 		<!-- <global-allowed-methods>login,toUpdate,doUpdate</global-allowed-methods>-->
 		<global-allowed-methods>*</global-allowed-methods>
 
 		<action name="user_*" class="userAction" method="{1}">
-			<result name="loginSuccess">/jsps/user_edit.jsp</result>
-			<result name="update">/jsps/user_edit.jsp</result>
+			<result name="loginSuccess">/jsps/user_allAndAdd.jsp</result>
+			<result name="update">/jsps/user_update.jsp</result>
 		</action>
 
 	</package>

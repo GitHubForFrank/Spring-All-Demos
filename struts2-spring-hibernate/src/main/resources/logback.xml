@@ -2,7 +2,7 @@
 <configuration>
 
     <!--添加监听，可以动态传入变量-->
-    <contextListener class="com.zmz.config.LoggerStartupListener"/>
+    <contextListener class="com.zmz.core.config.LoggerStartupListener"/>
     <property name="log.path.test" value="${rootFolder}/struts2-spring-hibernate/logs" />
     <property name="log.file.name" value="struts2-spring-hibernate" />
 

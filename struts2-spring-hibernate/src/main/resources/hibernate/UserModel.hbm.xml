@@ -4,7 +4,7 @@
         'http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd'>
 
 <hibernate-mapping>
-     <class name="com.zmz.infrastructure.dao.entity.UserEntity" table="tbl_user">
+     <class name="com.zmz.app.infrastructure.dao.entity.UserEntity" table="tbl_user">
         <id name="id" type="java.lang.Long">
             <generator class="native" />
         </id>
