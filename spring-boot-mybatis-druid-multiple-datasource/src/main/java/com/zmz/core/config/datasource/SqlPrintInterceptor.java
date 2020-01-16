@@ -27,7 +27,8 @@ import java.util.regex.Matcher;
 /**
  * MyBatis Print the sql which will be execute by mybatis
  *
- * @since 1.0.0
+ * @author ASNPHDG
+ * @create 2020-01-13 3:39 PM
  */
 @Slf4j
 @Intercepts

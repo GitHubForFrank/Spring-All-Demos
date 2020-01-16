@@ -1,4 +1,4 @@
-package com.zmz.core.config.datasource;
+package com.zmz.core.config.datasource.annotation;
 
 /**
  * @author ASNPHDG
@@ -6,7 +6,7 @@ package com.zmz.core.config.datasource;
  */
 public enum DataSourceEnum {
 
-    DB1("db1"),DB2("db2");
+    MASTER("master"),SLAVE("slave");
 
     private String value;
 

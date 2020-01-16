@@ -1,8 +1,8 @@
 package com.zmz.app.application.service.impl;
 
-import com.zmz.app.application.service.UserService;
+import com.zmz.app.application.service.UserService01;
 import com.zmz.app.domain.model.UserModel;
-import com.zmz.app.domain.repository.UserRepository;
+import com.zmz.app.domain.repository.UserRepository01;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,12 +11,13 @@ import java.util.List;
 
 /**
  * @author ASNPHDG
- * @create 2020-01-04 19:49
+ * @create 2020-01-16 22:50
  */
 @Service
-public class UserServiceImpl implements UserService {
+public class UserService01Impl implements UserService01 {
+
     @Autowired
-    private UserRepository userRepository;
+    private UserRepository01 userRepository;
 
     @Override
     public UserModel queryById(long id) {
@@ -29,7 +30,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Transactional(rollbackFor = ArithmeticException.class,transactionManager = "trm2")
+    @Transactional
     public void create(UserModel userModel) {
         userRepository.create(userModel);
     }
@@ -40,8 +41,9 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Transactional(rollbackFor = ArithmeticException.class,transactionManager = "trm1")
     public void updateUser(UserModel userModel) {
         userRepository.updateUser(userModel);
     }
+
 }
+

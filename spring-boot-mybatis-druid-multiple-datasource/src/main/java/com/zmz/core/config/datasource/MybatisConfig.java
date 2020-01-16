@@ -1,27 +1,30 @@
 package com.zmz.core.config.datasource;
 
-import com.alibaba.druid.spring.boot.autoconfigure.DruidDataSourceBuilder;
 import com.baomidou.mybatisplus.core.config.GlobalConfig;
 import com.baomidou.mybatisplus.core.config.GlobalConfig.DbConfig;
 import com.baomidou.mybatisplus.extension.plugins.PaginationInterceptor;
+import com.baomidou.mybatisplus.extension.plugins.PerformanceInterceptor;
 import com.baomidou.mybatisplus.extension.spring.MybatisSqlSessionFactoryBean;
 import com.github.pagehelper.PageInterceptor;
+import com.zmz.core.config.datasource.annotation.DataSourceEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.plugin.Interceptor;
 import org.apache.ibatis.session.SqlSessionFactory;
-import org.mybatis.spring.SqlSessionFactoryBean;
+import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
-import org.springframework.core.env.Environment;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.context.annotation.PropertySources;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import javax.sql.DataSource;
@@ -39,6 +42,8 @@ import java.util.Properties;
  */
 @Slf4j
 @Configuration
+@PropertySources({ @PropertySource(value = "classpath:mybatis.properties", ignoreResourceNotFound = true, encoding = "UTF-8") })
+@AutoConfigureAfter({DruidConfig.class})
 @EnableTransactionManagement
 public class MybatisConfig {
 
@@ -52,36 +57,25 @@ public class MybatisConfig {
     private String configLocation;
 
     @Autowired
-    private Environment env;
+    @Qualifier(value = "master")
+    DataSource masterDataSource;
 
+    @Autowired(required = false)
+    @Qualifier(value = "slave")
+    DataSource slaveDataSource;
 
-    @Bean(name = "db1")
-    @ConfigurationProperties(prefix = "spring.datasource.druid.db1" )
-    public DataSource db1() {
-        return DruidDataSourceBuilder.create().build();
-    }
-
-    @Bean(name = "db2")
-    @ConfigurationProperties(prefix = "spring.datasource.druid.db2" )
-    public DataSource db2() {
-        return DruidDataSourceBuilder.create().build();
-    }
-
-    /**
-     * 动态数据源配置
-     * @return
-     */
     @Bean(name = "multipleDataSource")
-    @Primary
-    public DataSource multipleDataSource(@Qualifier("db1") DataSource db1, @Qualifier("db2") DataSource db2) {
+    public DataSource multipleDataSource() {
         MultipleDataSource multipleDataSource = new MultipleDataSource();
-        Map< Object, Object > targetDataSources = new HashMap<>(2);
-        targetDataSources.put(DataSourceEnum.DB1.getValue(), db1);
-        targetDataSources.put(DataSourceEnum.DB2.getValue(), db2);
+        Map< Object, Object > targetDataSources = new HashMap<>();
+        targetDataSources.put(DataSourceEnum.MASTER.getValue(), masterDataSource);
+        if(slaveDataSource!=null){
+            targetDataSources.put(DataSourceEnum.SLAVE.getValue(), slaveDataSource);
+        }
         //添加数据源
         multipleDataSource.setTargetDataSources(targetDataSources);
         //设置默认数据源
-        multipleDataSource.setDefaultTargetDataSource(db1);
+        multipleDataSource.setDefaultTargetDataSource(masterDataSource);
         return multipleDataSource;
     }
 
@@ -90,31 +84,24 @@ public class MybatisConfig {
     public SqlSessionFactory sqlSessionFactory() {
         log.info("MybatisConfig.sqlSessionFactory");
         try {
-            boolean supportMybatisPlus = supportMybatisPlus();
-            log.info("supportMybatisPlus=" + supportMybatisPlus);
-            if(supportMybatisPlus){
-                return getMybatisPlusSqlSessionFactory();
-            }
-            else {
-                return getMybatisSqlSessionFactory();
-            }
-            //return getMybatisSqlSessionFactory();
+            return getMybatisPlusSqlSessionFactory();
         } catch (Exception e) {
             log.error("mybatis sqlSessionFactoryBean create error",e);
             return null;
         }
     }
 
-    @Bean(name="trm1")
-    public DataSourceTransactionManager db1TransactionManager(@Qualifier("db1") DataSource dataSource){
-        return new DataSourceTransactionManager(dataSource);
+    @Bean
+    public SqlSessionTemplate sqlSessionTemplate(SqlSessionFactory sqlSessionFactory) {
+        log.info("sqlSessionFactory(==null): " + (null == sqlSessionFactory));
+        return new SqlSessionTemplate(sqlSessionFactory);
     }
 
-    @Bean(name="trm2")
-    public DataSourceTransactionManager db2TransactionManager(@Qualifier("db2") DataSource dataSource){
+    @Bean
+    public PlatformTransactionManager multipleTransactionManager(@Qualifier("multipleDataSource")DataSource dataSource) {
+        log.info("MybatisConfig.sqlSessionTemplate");
         return new DataSourceTransactionManager(dataSource);
     }
-
 
     /***
      * Get SqlSessionFactory for Mybatis-plus
@@ -123,7 +110,7 @@ public class MybatisConfig {
         log.info("MybatisConfig.sqlSessionFactory");
         try {
             MybatisSqlSessionFactoryBean sessionFactoryBean = new MybatisSqlSessionFactoryBean();
-            sessionFactoryBean.setDataSource(multipleDataSource(db1(),db2()));
+            sessionFactoryBean.setDataSource(multipleDataSource());
 
             //Read typeAliasesPackage
             log.info("typeAliasesPackage=" + typeAliasesPackage);
@@ -150,8 +137,9 @@ public class MybatisConfig {
             Interceptor[] plugins = new Interceptor[]{paginationInterceptor(), sqlPrintInterceptor()};
             sessionFactoryBean.setPlugins(plugins);
 
-            DbConfig dbConfig = new GlobalConfig.DbConfig();
+            DbConfig dbConfig = new DbConfig();
             //dbConfig.setIdType(IdType.AUTO);
+            //dbConfig.setDbType(DbType.POSTGRE_SQL);
             //dbConfig.setColumnLike(true);
             //dbConfig.setTablePrefix("t_");
             //dbConfig.setCapitalMode(false);
@@ -160,6 +148,8 @@ public class MybatisConfig {
             globalConfig.setDbConfig(dbConfig);
             globalConfig.setRefresh(true);
 
+            /* 自动填充插件 */
+            globalConfig.setMetaObjectHandler(new MetaObjectHandlerConfig());
 
             sessionFactoryBean.setGlobalConfig(globalConfig);
 
@@ -171,95 +161,6 @@ public class MybatisConfig {
             log.error("mybatis sqlSessionFactoryBean create error",e);
             return null;
         }
-    }
-
-    /**
-     * Get SqlSessionFactory for Mybatis, not Mybatis-plus
-     * @return
-     */
-    private SqlSessionFactory getMybatisSqlSessionFactory() {
-        try {
-            SqlSessionFactoryBean sessionFactoryBean = new SqlSessionFactoryBean();
-            sessionFactoryBean.setDataSource(multipleDataSource(db1(),db2()));
-
-            //Read typeAliasesPackage
-            sessionFactoryBean.setTypeAliasesPackage(typeAliasesPackage);
-
-            //Set all mappers location of xxxxMapper.xml & Java XxxxMapper.java files location
-            List<Resource> resourcesList = getAllMappersLocation();
-            if ( null != resourcesList ) {
-                log.info("resourcesList:" + resourcesList.size());
-                sessionFactoryBean.setMapperLocations( resourcesList.toArray(new Resource[0]));
-            }
-
-            //Set mybatis-config.xml configuration file location
-            sessionFactoryBean.setConfigLocation(new DefaultResourceLoader().getResource(configLocation));
-
-            //添加分页插件、打印sql插件
-            Interceptor[] plugins = new Interceptor[]{pageInterceptor(),sqlPrintInterceptor()};
-            sessionFactoryBean.setPlugins(plugins);
-
-            return sessionFactoryBean.getObject();
-        } catch (IOException e) {
-            log.error("mybatis resolver mapper*xml is error",e);
-            return null;
-        } catch (Exception e) {
-            log.error("mybatis sqlSessionFactoryBean create error",e);
-            return null;
-        }
-    }
-
-    private boolean supportMybatisPlus() {
-//        String url = env.getProperty("spring.datasource.url");
-//        log.debug("supportMybatisPlus.url1:" + url);
-//        DbType dbType = JdbcUtils.getDbType(url);
-//        log.debug("supportMybatisPlus.dbType:" + dbType);
-//        if(dbType == DbType.OTHER){
-//            return false;
-//        }
-//        else {
-//            return true;
-//        }
-        return true;
-    }
-
-    public List<Resource> getAllMappersLocation(){
-        log.info("mapperLocations: " + (null == mapperLocations ? "null" : ""+mapperLocations.size()));
-        List<Resource> resourcesList = null;
-        for ( String mapperLocation : mapperLocations) {
-            log.info("mapperLocation:" + mapperLocation);
-            try {
-                Resource[] resources = new PathMatchingResourcePatternResolver().getResources(mapperLocation);
-                if (null != resources && resources.length > 0) {
-                    log.info("resources:" + resources.length);
-                    if (null == resourcesList) {
-                        resourcesList = new ArrayList<>();
-                    }
-                    resourcesList.addAll(Arrays.asList(resources));
-                }
-            } catch (Exception ex) {
-                //Ignore wrong mapperLocation and no-resource location
-                log.debug("WRONG mapperLocation:" + mapperLocation);
-            }
-        }
-        return resourcesList;
-    }
-
-    /**
-     * Mybatis-plus Pagination plugin<br>
-     * Document: http://mp.baomidou.com<br>
-     */
-    @Bean
-    public PaginationInterceptor paginationInterceptor() {
-        log.info("MybatisConfig.paginationInterceptor");
-        PaginationInterceptor paginationInterceptor = new PaginationInterceptor();
-        return paginationInterceptor;
-    }
-
-    @Bean
-    public SqlPrintInterceptor sqlPrintInterceptor(){
-        log.info("MybatisConfig.sqlPrintInterceptor");
-        return new SqlPrintInterceptor();
     }
 
     /**
@@ -307,6 +208,54 @@ public class MybatisConfig {
         props.setProperty("params", "count=countSql");
         pageInterceptor.setProperties(props);
         return pageInterceptor;
+    }
+
+    /**
+     * Mybatis-plus Pagination plugin<br>
+     * Document: http://mp.baomidou.com<br>
+     */
+    @Bean
+    public PaginationInterceptor paginationInterceptor() {
+        log.info("MybatisConfig.paginationInterceptor");
+        PaginationInterceptor paginationInterceptor = new PaginationInterceptor();
+        return paginationInterceptor;
+    }
+
+    @Bean
+    public SqlPrintInterceptor sqlPrintInterceptor(){
+        log.info("MybatisConfig.sqlPrintInterceptor");
+        return new SqlPrintInterceptor();
+    }
+
+    /**
+     * Performance analysis, not suggest for production
+     */
+    @Bean
+    public PerformanceInterceptor performanceInterceptor(){
+        log.info("MybatisConfig.performanceInterceptor");
+        return new PerformanceInterceptor();
+    }
+
+    public List<Resource> getAllMappersLocation(){
+        log.info("mapperLocations: " + (null == mapperLocations ? "null" : ""+mapperLocations.size()));
+        List<Resource> resourcesList = null;
+        for ( String mapperLocation : mapperLocations) {
+            log.info("mapperLocation:" + mapperLocation);
+            try {
+                Resource[] resources = new PathMatchingResourcePatternResolver().getResources(mapperLocation);
+                if (null != resources && resources.length > 0) {
+                    log.info("resources:" + resources.length);
+                    if (null == resourcesList) {
+                        resourcesList = new ArrayList<>();
+                    }
+                    resourcesList.addAll(Arrays.asList(resources));
+                }
+            } catch (Exception ex) {
+                //Ignore wrong mapperLocation and no-resource location
+                log.debug("WRONG mapperLocation:" + mapperLocation);
+            }
+        }
+        return resourcesList;
     }
 
 }

@@ -1,7 +1,5 @@
 package com.zmz.core.config.datasource.annotation;
 
-import com.zmz.core.config.datasource.DataSourceEnum;
-
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -18,5 +16,5 @@ import java.lang.annotation.Target;
 @Documented
 public @interface DataSource {
 
-    DataSourceEnum value() default DataSourceEnum.DB1;
+    DataSourceEnum value() default DataSourceEnum.MASTER;
 }
