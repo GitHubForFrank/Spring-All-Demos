@@ -67,7 +67,7 @@ public class DruidConfig {
         return filterRegistrationBean;
     }
 
-    private Properties getDataSourceProperties(String prefix) throws Exception {
+    private Properties getDataSourceProperties(String prefix) {
         Properties properties = new Properties();
         setProperties(properties,"initialSize",prefix+".minIdle");
         setProperties(properties,"minIdle",prefix+".initialSize");
@@ -82,7 +82,7 @@ public class DruidConfig {
         setProperties(properties,"testOnBorrow",prefix+".testOnBorrow");
         setProperties(properties,"testOnReturn",prefix+".testOnReturn");
 
-        //如下不做非空判断
+        //如下不做非空判断,是连接数据库必须字段
         properties.put("driverClassName", env.getProperty(prefix+".driverClassName"));
         properties.put("url", env.getProperty(prefix+".url"));
         properties.put("username", env.getProperty(prefix+".username"));

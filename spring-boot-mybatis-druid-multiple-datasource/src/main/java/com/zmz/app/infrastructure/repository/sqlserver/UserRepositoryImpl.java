@@ -45,7 +45,7 @@ public class UserRepositoryImpl implements UserRepository {
         try{
             userMapper.insert(userEntity);
             //人为产生异常
-            int i = 4/0;
+//            int i = 4/0;
         }catch(Exception e){
             e.printStackTrace();
             //抛出Exception异常

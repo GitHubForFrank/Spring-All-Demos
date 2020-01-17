@@ -1,4 +1,4 @@
-package com.zmz.app.domain.repository;
+package com.zmz.app.application.service;
 
 
 import com.zmz.app.domain.model.UserModel;
@@ -7,10 +7,9 @@ import java.util.List;
 
 /**
  * @author ASNPHDG
- * @create 2020-01-03 22:55
+ * @create 2020-01-04 19:49
  */
-public interface UserRepository02 {
-
+public interface UserService {
     UserModel queryById(long id);
     List<UserModel> queryAllUser();
     void create(UserModel userModel);
