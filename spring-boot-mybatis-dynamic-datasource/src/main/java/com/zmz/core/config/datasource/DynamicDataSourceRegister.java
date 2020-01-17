@@ -94,7 +94,7 @@ public class DynamicDataSourceRegister implements ImportBeanDefinitionRegistrar,
             customDataSources.put(key, consumerDatasource);
             // 数据源上下文，用于管理数据源与记录已经注册的数据源key
             DynamicDataSourceContextHolder.dataSourceIds.add(key);
-            log.info("注册数据源{}成功", key);
+            log.info("注册数据源 {} 成功", key);
         }
         // bean定义类
         GenericBeanDefinition define = new GenericBeanDefinition();
