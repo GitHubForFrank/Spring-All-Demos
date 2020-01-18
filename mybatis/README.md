@@ -3,6 +3,7 @@
 #### 介绍
 mybatis demo project。
 <br/>通过JUnit完成增删改查测试。
+<br/>通过JUnit完成对 mybatis-generator-core 的使用测试。
 
 #### 软件架构
 1.  Mybatis Version ：3.5.3

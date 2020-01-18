@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE generatorConfiguration  PUBLIC
+        "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"
+        "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
+<generatorConfiguration>
+
+    <!-- 数据库驱动包，使用绝对路径,如果 pom.xml 添加了jdbc的依赖jar包，此处可以不用指定-->
+    <!--    <classPathEntry location="D:\workspaces\workspace_Home\Project_H_Plugins\personal-development-plugin\lib\mssql-jdbc-7.2.2.jre8.jar" />-->
+
+    <!-- 环境配置 id="自定义的配置名称" targetRuntime="MyBatis版本" -->
+    <context id="MySqlTables" targetRuntime="MyBatis3" defaultModelType="flat">
+        <commentGenerator>
+            <property name="suppressAllComments" value="true" />
+            <property name="suppressDate" value="true" />
+        </commentGenerator>
+
+        <!-- 数据库连接信息 -->
+        <jdbcConnection driverClass="com.microsoft.sqlserver.jdbc.SQLServerDriver"
+                        connectionURL="jdbc:sqlserver://182.61.149.71:1433;DatabaseName=pds_demo"
+                        userId="kong"
+                        password="2020Jan11">
+        </jdbcConnection>
+
+        <!-- Java数据类型分离器,数据类型转换, property 属性 name="强迫双精度" value="false" -->
+        <javaTypeResolver>
+            <property name="forceBigDecimals" value="true" />
+        </javaTypeResolver>
+
+        <!-- Java模型生成器 :
+         targetPackage="生成文件的目标路径"
+         targetProject="已存在的项目包"
+         enableSubPackages-可以省略对应约束名,true-是的，可以省略tb_generator
+         trimString-验证字符串，true-是的
+         -->
+        <javaModelGenerator targetPackage="com.zmz.mbg.cm.domain.model"
+                            targetProject="C:\temp">
+            <property name="enableSubPackages" value="false" />
+            <property name="trimStrings" value="true" />
+            <property name="rootClass" value="com.zmz.mbg.common.domain.BaseDomain"/>
+        </javaModelGenerator>
+
+        <!-- sql映射文件生成器 :
+         targetPackage="生成文件的目标路径"
+         targetProject="已存在的项目包"
+         enableSubPackages-可以省略对应约束名,true-是的，可以省略tb_generator
+         -->
+        <sqlMapGenerator targetPackage="com.zmz.mbg.cm.infrastructure.persistent.sqlmapper"
+                         targetProject="C:\temp">
+            <property name="enableSubPackages" value="false" />
+        </sqlMapGenerator>
+
+        <!-- DAO -->
+        <javaClientGenerator type="XMLMAPPER"
+                             targetPackage="com.zmz.mbg.common.util.robot.test.bean"
+                             targetProject="C:\temp">
+            <property name="enableSubPackages" value="true" />
+        </javaClientGenerator>
+
+        <!-- 表单，已存在，根据此表生成其它文件 ：
+        tableName="已有的表单名称"
+        domainObjetctName="对应生成的文件名前缀"
+        -->
+        <table tableName="tbl_user" domainObjectName="User"
+               enableCountByExample="false" enableUpdateByExample="false"
+               enableDeleteByExample="false" enableSelectByExample="false"
+               selectByExampleQueryId="false" enableDeleteByPrimaryKey="false">
+            <!-- useActualColumnNames-使用真实列名 , true-嗯。如果false，则由columnOverride节点控制，驼峰命名字段 -->
+            <property name="useActualColumnNames" value="false" />
+            <!-- 标识列 column="列名" sqlStatement="某种数据库语言" identity="作为主键" -->
+            <!--            <generatedKey column="dep_id" sqlStatement="MySql" identity="true"/>-->
+        </table>
+
+
+    </context>
+</generatorConfiguration>
+
