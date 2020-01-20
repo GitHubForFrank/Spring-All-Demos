@@ -2,21 +2,34 @@
 *.class
 
 # Log file
+logs/
 *.log
+logfile
+
+
 
 # BlueJ files
 *.ctxt
 
+
+
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
 
-logfile
-logs/
+
+
+# IDE
 .idea/
 target/
 .svn/
 tmp/
 *.iml
+
+.metadata
+.classpath
+.project
+.settings
+RemoteSystemsTempFiles/
 
 # Package Files #
 # *.jar
