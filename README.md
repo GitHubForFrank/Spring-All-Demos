@@ -19,24 +19,27 @@ spring-cloud：Finchley.SR2
 
 所有 spring 的项目主要提供基于注解的演示。
 
-| samples                                                      | 描述                                                         | 官方文档                                                     |
+| Demo Name                                                     | 描述                                                         | 官方文档                                                     |
 | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | [springmvc](https://github.com/GitHubForFrank/spring-all-demos/tree/master/spring/springmvc) | springmvc 基础、参数绑定、格式转换、数据校验、异常处理、 文件上传下载、视图渲染 | [Spring Mvc ](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/web.html#mvc) |
 
 
 <br/>
 
-## 2. spring-boot samples
+## 2. Spring-boot Demos
 
-| samples                                                      | 描述                                       | 官方文档                                                     |
+| Demo Name                                                      | 描述                                       | 官方文档                                                     |
 | ------------------------------------------------------------ | ------------------------------------------ | ------------------------------------------------------------ |
+| [spring-boot-mybatis-dynamic-datasource](https://github.com/GitHubForFrank/spring-all-demos/tree/master/spring-boot/spring-boot-mybatis-dynamic-datasource) | spring-boot & mybatis 实现动态数据源。不支持分布式事务。 | [Spring XXX ](https://docs.spring.io/spring/docs/5.2.2.RELEASE) |
 
 
 <br/>
 
-## 3. spring-cloud  samples
+## 3. Spring-cloud  Demos
 
-| samples                                                      | 描述                                                         | 官方文档                                                     |
+| Demo Name                                                      | 描述                                                         | 官方文档                                                     |
 | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+
+
 
 
