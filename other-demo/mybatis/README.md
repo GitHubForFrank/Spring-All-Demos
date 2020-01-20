@@ -20,7 +20,7 @@ mybatis demo project。
 2.  xxxx
 3.  xxxx
 <br/>动图测试:
-<br/>![Image](00-materials/images/test.gif)
+<br/>![Image](https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/images/test.gif)
 #### 参与贡献
 
 1.  Fork 本仓库

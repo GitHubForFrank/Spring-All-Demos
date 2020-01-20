@@ -52,4 +52,5 @@ spring-cloud：Finchley.SR2
 	- 命令行方法：`git clone https://github.com/GitHubForFrank/spring-all-demos.git --depth=1`
 	- TortoiseGit GUI 方法：
 
-![clone 一个版本](00-materials/images/clone-depth-1.jpg)
+![clone 一个版本](00-materials/images/clone-depth-1.png)
+
