@@ -20,7 +20,7 @@ mybatis demo project。
 2.  xxxx
 3.  xxxx
 <br/>动图测试:
-<br/>![Image](https://github.com/GitHubForFrank/framework-integration-demo/blob/master/00-materials/md-images/test.gif)
+<br/>![Image](00-materials/images/test.gif)
 #### 参与贡献
 
 1.  Fork 本仓库
