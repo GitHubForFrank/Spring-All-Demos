@@ -116,7 +116,7 @@ public class SwaggerConfig {
                     continue;
                 }
 
-                //sometime declaringClass.getName() contains $ , for example : com.aia.testlog.api.controller.DictionaryController$$EnhancerBySpringCGLIB$$2f138dac
+                //sometime declaringClass.getName() contains $ , for example : com.zmz.testlog.api.controller.DictionaryController$$EnhancerBySpringCGLIB$$2f138dac
                 String controllerName = declaringClass.getName().contains("$") ?
                         declaringClass.getName().substring(0, declaringClass.getName().indexOf('$')) : declaringClass.getName();
 
@@ -211,8 +211,8 @@ public class SwaggerConfig {
         String SPRING_FOX_PACKAGE = "springfox.documentation";
         String SPRING_PACKAGE = "org.springframework";
         String SWAGGER_BOOTSTRAP_UI_PACKAGE="com.github.xiaoymin.swaggerbootstrapui.web";
-        String AIA_CORE_PACKAGE="com.zmz.core";
-        String AIA_CORE_DEMO_PACKAGE="com.zmz.demo";
+        String CORE_PACKAGE="com.zmz.core";
+        String CORE_DEMO_PACKAGE="com.zmz.demo";
 
         Set<String> packageSet = new HashSet<>();
         Map<String, HandlerMapping> handlerMappingMap = BeanFactoryUtils.beansOfTypeIncludingAncestors(SpringContextUtil.getApplicationContext() , HandlerMapping.class);
@@ -223,7 +223,7 @@ public class SwaggerConfig {
                 for (Map.Entry<RequestMappingInfo, HandlerMethod> requestMappingInfoHandlerMethodEntry : handlerMethods.entrySet()){
                     HandlerMethod mappingInfoValue = requestMappingInfoHandlerMethodEntry.getValue();
                     String packageName = mappingInfoValue.getBeanType().getPackage().getName();
-                    if (!packageName.contains(SPRING_FOX_PACKAGE) && !packageName.contains(SPRING_PACKAGE) && !packageName.contains(SWAGGER_BOOTSTRAP_UI_PACKAGE) && !packageName.contains(AIA_CORE_PACKAGE) && !packageName.contains(AIA_CORE_DEMO_PACKAGE)){
+                    if (!packageName.contains(SPRING_FOX_PACKAGE) && !packageName.contains(SPRING_PACKAGE) && !packageName.contains(SWAGGER_BOOTSTRAP_UI_PACKAGE) && !packageName.contains(CORE_PACKAGE) && !packageName.contains(CORE_DEMO_PACKAGE)){
                         packageSet.add(packageName);
                     }
                 }
