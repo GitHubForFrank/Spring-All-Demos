@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!--添加监听，可以动态传入变量-->
+    <contextListener class="com.zmz.core.config.LoggerStartupListener"/>
+    <property name="log.file.path" value="${rootFolder}/spring-mybatis-jta/logs" />
+    <property name="log.file.name" value="spring-mybatis-jta" />
+
+    <!--
+    定义日志文件的存储地址, LogBack 的配置中使用相对路径 ../temp/999 意味着向上两级目录建立temp/999
+    建议项目打包成jar文件的时候使用相对路径
+    -->
+    <!--   <property name="log.path" value="../temp/999" />-->
+
+    <!-- 控制台输出 -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度%msg：日志消息，%n是换行符-->
+            <pattern>[%date{yyyy-MM-dd HH:mm:ss.SSS}]-[%r]-[%t]-[%p]-[%logger] %.-10000m%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>debug</level>
+        </filter>
+    </appender>
+    <appender name="ASYNC_CONSOLE" class="ch.qos.logback.classic.AsyncAppender">
+        <discardingThreshold>0</discardingThreshold>
+        <queueSize>10000</queueSize>
+        <appender-ref ref="CONSOLE" />
+    </appender>
+
+    <!-- 按照每天生成日志文件 -->
+    <appender name="BASE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${log.file.path}/${log.file.name}.log</file>
+        <encoder>
+            <pattern>[%date{yyyy-MM-dd HH:mm:ss.SSS}]-[%r]-[%t]-[%p]-[%logger] %m%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${log.file.path}/history/${log.file.name}-%d{yyyy-MM-dd}-%i.log</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>50MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+    </appender>
+    <appender name="ASYNC_BASE" class="ch.qos.logback.classic.AsyncAppender">
+        <discardingThreshold>0</discardingThreshold>
+        <queueSize>10000</queueSize>
+        <appender-ref ref="BASE" />
+    </appender>
+
+    <!-- 日志输出级别 TRACE, DEBUG, INFO, WARN, ERROR, ALL 和 OFF -->
+    <root level="INFO">
+        <appender-ref ref="ASYNC_CONSOLE" />
+        <appender-ref ref="ASYNC_BASE"/>
+    </root>
+
+</configuration>

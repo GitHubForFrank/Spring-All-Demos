@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+            http://www.springframework.org/schema/beans/spring-beans.xsd
+            http://www.springframework.org/schema/context
+            http://www.springframework.org/schema/context/spring-context.xsd
+            http://www.springframework.org/schema/tx
+            http://www.springframework.org/schema/tx/spring-tx.xsd
+            http://www.springframework.org/schema/aop
+            http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <!-- 启动扫描 -->
+    <context:component-scan base-package="com.zmz"/>
+
+    <!-- 启用CGliB -->
+    <aop:aspectj-autoproxy />
+
+    <context:property-placeholder location="classpath:jdbc.properties"/>
+
+    <!-- 两个数据源的公用配置，方便下面直接引用 -->
+    <bean id="abstractXADataSource" class="com.atomikos.jdbc.AtomikosDataSourceBean" init-method="init" destroy-method="close" abstract="true">
+        <property name="poolSize" value="10" />
+        <property name="minPoolSize" value="10"/>
+        <property name="maxPoolSize" value="30"/>
+        <property name="borrowConnectionTimeout" value="60"/>
+        <property name="reapTimeout" value="20"/>
+        <property name="maxIdleTime" value="60"/>
+        <property name="maintenanceInterval" value="60" />
+        <property name="loginTimeout" value="60"/>
+        <property name="logWriter" value="60"/>
+        <property name="testQuery" value="select 1"/>
+    </bean>
+
+    <!-- 配置第一个数据源 -->
+    <bean id="dataSource_a" parent="abstractXADataSource">
+        <!-- value只要两个数据源不同就行，随便取名 -->
+        <property name="uniqueResourceName" value="${jdbc.uniqueResourceName}" />
+        <property name="xaDataSourceClassName" value="${jdbc.xaDataSourceClassName}"/>
+        <property name="xaProperties">
+            <props>
+                <prop key="url">${jdbc.url}</prop>
+                <prop key="user">${jdbc.username}</prop>
+                <prop key="password">${jdbc.password}</prop>
+            </props>
+        </property>
+    </bean>
+
+    <!-- 配置第二个数据源-->
+    <bean id="dataSource_b" parent="abstractXADataSource">
+        <!-- value只要两个数据源不同就行，随便取名 -->
+        <property name="uniqueResourceName" value="${jdbc_tb.uniqueResourceName}" />
+        <property name="xaDataSourceClassName" value="${jdbc_tb.xaDataSourceClassName}"/>
+        <property name="xaProperties">
+            <props>
+                <prop key="url">${jdbc_tb.url}</prop>
+                <prop key="user">${jdbc_tb.username}</prop>
+                <prop key="password">${jdbc_tb.password}</prop>
+            </props>
+        </property>
+    </bean>
+
+    <bean name="dynamicDatasource" class="com.zmz.core.datasource.MultipleDataSource">
+        <property name="targetDataSources">
+            <map>
+                <entry key="ds_1" value-ref="dataSource_a"/>
+                <entry key="ds_2" value-ref="dataSource_b"/>
+            </map>
+        </property>
+        <property name="defaultTargetDataSource" ref="dataSource_a" />
+    </bean>
+
+    <bean id="sqlSessionFactory_a" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource_a"/>
+        <property name="typeAliasesPackage" value="com.amos.spring.dschange.bean" />
+        <!-- 配置MyBatis全局配置文件:mybatis-config.xml -->
+        <property name="configLocation" value="classpath:mybatis-config.xml"/>
+        <!-- 扫描sql配置文件:mapper需要的xml文件 -->
+        <property name="mapperLocations" value="classpath:mapper/*.xml"/>
+    </bean>
+    <bean id="sqlSessionFactory_b" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource_b"/>
+        <property name="typeAliasesPackage" value="com.amos.spring.dschange.bean" />
+        <!-- 配置MyBatis全局配置文件:mybatis-config.xml -->
+        <property name="configLocation" value="classpath:mybatis-config.xml"/>
+        <!-- 扫描sql配置文件:mapper需要的xml文件 -->
+        <property name="mapperLocations" value="classpath:mapper/*.xml"/>
+    </bean>
+
+    <!-- 配置自定义的SqlSessionTemplate模板，注入相关配置 -->
+    <bean id="sqlSessionTemplate" class="com.zmz.core.mybatis.CustomSqlSessionTemplate" scope="prototype">
+        <constructor-arg ref="sqlSessionFactory_a" />
+        <property name="targetSqlSessionFactorys">
+            <map>
+                <entry value-ref="sqlSessionFactory_a" key="ds_1"/>
+                <entry value-ref="sqlSessionFactory_b" key="ds_2"/>
+            </map>
+        </property>
+    </bean>
+
+    <bean id="mapperScannerConfigurer" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.zmz.app.infrastructure.dao.mapper" />
+        <property name="sqlSessionTemplateBeanName" value="sqlSessionTemplate"/>
+    </bean>
+
+    <!-- jta -->
+    <bean id="atomikosTransactionManager" class="com.atomikos.icatch.jta.UserTransactionManager" init-method="init" destroy-method="close">
+        <property name="forceShutdown" value="true" />
+    </bean>
+    <bean id="atomikosUserTransaction" class="com.atomikos.icatch.jta.UserTransactionImp">
+        <property name="transactionTimeout" value="300" />
+    </bean>
+    <bean id="springTransactionManager" class="org.springframework.transaction.jta.JtaTransactionManager">
+        <property name="transactionManager" ref="atomikosTransactionManager" />
+        <property name="userTransaction" ref="atomikosUserTransaction" />
+    </bean>
+    <tx:annotation-driven transaction-manager="springTransactionManager" proxy-target-class="true" />
+
+</beans>
