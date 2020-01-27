@@ -11,7 +11,7 @@
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#23-Swagger-注解">2.3 Swagger 注解 </a><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#24-可视化接口文档">2.4 可视化接口文档</a><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#25-接口测试">2.5 接口测试</a><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#26-Yaml文件导出">2.6 Yaml文件导出</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#26-遗留问题部分">2.6 遗留问题部分</a><br/>
 </nav>
 
 ## 一、概念综述
@@ -285,7 +285,19 @@ Swagger-UI 除了提供接口可视化的功能外，还可以用于接口测试
 <div align="center"> <img src="https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/images/spring-boot-swagger2/swagger-execute.png"/> </div>
 <div align="center"> <img src="https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/images/spring-boot-swagger2/swagger-execute-response.png"/> </div>
 
-遗留问题部分：
+
+### 2.6 遗留问题部分
+
+1. api-docs 链接中的中文Bug
+
 <div align="center"> <img src="https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/images/spring-boot-swagger2/swagger-ui-bug01.png"/> </div>
 
-### 2.6 Yaml文件导出
+2. 使用网站 http://editor.swagger.io/ 进行Yaml文件导出，我本机失效
+
+<div align="center"> <img src="https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/images/spring-boot-swagger2/swagger-ui-bug02.png"/> </div>
+
+
+
+
+
+
