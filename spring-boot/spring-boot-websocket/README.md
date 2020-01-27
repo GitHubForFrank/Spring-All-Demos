@@ -9,6 +9,7 @@
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#22-注册服务">2.2 注册服务</a><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#23-前端-WebSocket">2.3 前端 WebSocket</a><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#24-简单登录的实现">2.4 简单登录的实现</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#25-效果演示">2.5 效果演示</a><br/>
 </nav>
 
 ## 一、项目说明
@@ -303,4 +304,10 @@ public class LoginController {
 }
 
 ```
+
+### 2.5 效果演示
+
+Login URL : `http://localhost:10190/app/`
+
+<div align="center"> <img src="https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/images/spring-boot-websocket/chat-play.gif"/> </div>
 
