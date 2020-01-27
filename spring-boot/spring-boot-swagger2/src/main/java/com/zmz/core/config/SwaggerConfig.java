@@ -81,7 +81,6 @@ public class SwaggerConfig {
     @Autowired
     private SwaggerHttpHeader swaggerHttpHeader;
 
-
     /**
      * 开发和测试环境下可以开启swagger辅助进行调试,而生产环境下可以关闭或者进行相应的权限控制，防止接口信息泄露
      * @return

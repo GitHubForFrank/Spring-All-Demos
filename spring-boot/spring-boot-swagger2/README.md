@@ -69,20 +69,301 @@ OpenAPI、Swagger、SpringFox 之间的关联关系可以表述为：**Swagger C
 2. 在 SwaggerConfig 配置类上添加 `@Profile({"dev","test"}) ` 注解，指明仅在开发环境和测试环境下激活此配置，并在打包部署时使用 spring.profiles.active 指明具体的环境。
 3. 在配置文件中配置自定义的开关参数，并在 SwaggerConfig 配置类上添加 `@ConditionalOnProperty(name = "swagger.enable", havingValue = "true") `，指明配置类的生效条件。@ConditionalOnProperty 注解能够控制某个配置类是否生效。具体操作是通过 name 和 havingValue 属性来实现，name 对应配置文件中的某个属性，如果该值为空，则返回 false；如果值不为空，则将该值与 havingValue 指定的值进行比较，如果一样则返回 true；否则返回 false。如果返回值为 false，则对应的配置不生效；为 true 则生效。
 
-以下是第一种开关配置方式的使用示例(为了方便看log，配置了logback和tomacat)：
+以下是第一种开关配置方式的使用示例(为了方便看log，配置了logback和tomcat)：
 
+SwaggerConfig 类
 ```java
-/**
- * @description :  Swagger 配置类
- */
 @Slf4j
 @Configuration
 @PropertySource(value = "classpath:swagger2.properties", ignoreResourceNotFound = true, encoding = "UTF-8")
 @EnableSwagger2
 public class SwaggerConfig {
 
-   //请看源码部分
-   
+    @Value("${swagger.enable}")
+    private boolean swaggerEnable;
+
+    @Value("${swagger2.basePackage}")
+    private String basePackage;
+    @Value("${swagger2.title}")
+    private String title;
+    @Value("${swagger2.description}")
+    private String description;
+    @Value("${swagger2.termsOfServiceUrl}")
+    private String termsOfServiceUrl;
+    @Value("${swagger2.version}")
+    private String version;
+    @Value("${swagger2.contact.name}")
+    private String contactName;
+    @Value("${swagger2.contact.url}")
+    private String contactUrl;
+    @Value("${swagger2.contact.email}")
+    private String contactEmail;
+
+    @Autowired
+    private TypeResolver typeResolver;
+    @Autowired
+    private SwaggerHttpHeader swaggerHttpHeader;
+
+    /**
+     * 开发和测试环境下可以开启swagger辅助进行调试,而生产环境下可以关闭或者进行相应的权限控制，防止接口信息泄露
+     * @return
+     */
+    @Bean
+    public Docket createDocket4AllApis(){
+        return new Docket(DocumentationType.SWAGGER_2)
+                .enable(swaggerEnable)
+                .groupName("All APIs")
+                .apiInfo(apiInfo(title))
+                .select()
+                .apis(getPredicate(basePackage))
+                .paths(Predicates.not(PathSelectors.regex("/error.*|/actuator.*")))
+                .build()
+                .alternateTypeRules(getRule())
+                .globalOperationParameters(this.getHeaders())
+                .forCodeGeneration(true);
+    }
+    @Bean
+    public String createDocketByController(){
+        Map<String, Object> mapOfAllControl = SpringContextUtil.getApplicationContext().getBeansWithAnnotation(Api.class);
+        if(mapOfAllControl!=null) {
+            for (Map.Entry<String, Object> entry : mapOfAllControl.entrySet()) {
+                String key = entry.getKey();
+                Object value = entry.getValue();
+                Class<?> declaringClass = value.getClass();
+
+                String packageStr = declaringClass.getPackage().getName();
+                ApiIgnore apiIgnore = declaringClass.getAnnotation(ApiIgnore.class);
+                if (!packageStr.startsWith(basePackage) || apiIgnore != null) {
+                    continue;
+                }
+
+                //sometime declaringClass.getName() contains $ , for example : com.zmz.testlog.api.controller.DictionaryController$$EnhancerBySpringCGLIB$$2f138dac
+                String controllerName = declaringClass.getName().contains("$") ?
+                        declaringClass.getName().substring(0, declaringClass.getName().indexOf('$')) : declaringClass.getName();
+
+                Api api = declaringClass.getAnnotation(Api.class);
+                String apiValue = api.value();
+
+                Docket obj = new Docket(DocumentationType.SWAGGER_2)
+                        .enable(swaggerEnable)
+                        .groupName(apiValue)
+                        .select()
+                        .apis(getPredicate(controllerName))
+                        .paths(PathSelectors.any())
+                        .build()
+                        .apiInfo(apiInfo(title))
+                        .alternateTypeRules(getRule())
+                        .globalOperationParameters(this.getHeaders())
+                        .forCodeGeneration(true);
+
+                registerBean(key, obj);
+            }
+        }
+        return "createDocketByController";
+    }
+    @Bean
+    public String createDocketByPackage(){
+        Set<String> packageList = getPackageList();
+        if (!CollectionUtils.isEmpty(packageList)){
+            packageList.forEach(packages -> {
+                Docket obj = new Docket(DocumentationType.SWAGGER_2)
+                        .enable(swaggerEnable)
+                        .groupName(packages)
+                        .apiInfo(apiInfo(packages))
+                        .select()
+                        .apis(RequestHandlerSelectors.basePackage(packages))
+                        .paths(PathSelectors.any())
+                        .build()
+                        .globalOperationParameters(this.getHeaders());
+                registerBean(packages,obj);
+            });
+        }
+        return "createDocketByPackage";
+    }
+
+    private ApiInfo apiInfo(String title) {
+        return new ApiInfoBuilder()
+                .title(title)
+                .description(description)
+                .termsOfServiceUrl(termsOfServiceUrl)
+                .contact(new Contact(contactName, contactUrl, contactEmail))
+                .version(version)
+                .build();
+    }
+    private Predicate<RequestHandler> getPredicate(String splitCharacter){
+        return new Predicate<RequestHandler>() {
+            @Override
+            public boolean apply(RequestHandler input) {
+                boolean tempInd = false;
+                Class<?> declaringClass = input.declaringClass();
+                if(declaringClass.isAnnotationPresent(Api.class)) {
+                    String conName = declaringClass.getName().contains("$")?
+                            declaringClass.getName().substring(0,declaringClass.getName().indexOf('$')):declaringClass.getName();
+                    if(conName.startsWith(splitCharacter)){
+                        tempInd = true;
+                    }
+                }
+                return tempInd;
+            }
+        };
+    }
+    private AlternateTypeRule getRule() {
+        return newRule(typeResolver.resolve(Response.class, typeResolver.resolve(ResponseEntity.class, WildcardType.class)),
+                typeResolver.resolve(WildcardType.class));
+    }
+    private List<Parameter> getHeaders(){
+        List<Parameter> parameters = new ArrayList<>();
+        for(int iLoop=0; iLoop<swaggerHttpHeader.getName().size(); iLoop++){
+            ParameterBuilder parameterBuilder = new ParameterBuilder();
+            parameterBuilder
+                    // Parameter type support : header, cookie, body, query etc
+                    .parameterType("header")
+                    .name(swaggerHttpHeader.getName().get(iLoop))
+                    .defaultValue(swaggerHttpHeader.getDefaultValue().get(iLoop))
+                    .description(swaggerHttpHeader.getDescription().get(iLoop))
+                    .modelRef(new ModelRef(swaggerHttpHeader.getModelRef().get(iLoop)))
+                    .required(swaggerHttpHeader.getRequired().get(iLoop)).build();
+            parameters.add(parameterBuilder.build());
+        }
+        return parameters;
+    }
+    private Set<String> getPackageList(){
+
+        String SPRING_FOX_PACKAGE = "springfox.documentation";
+        String SPRING_PACKAGE = "org.springframework";
+        String SWAGGER_BOOTSTRAP_UI_PACKAGE="com.github.xiaoymin.swaggerbootstrapui.web";
+        String CORE_PACKAGE="com.zmz.core";
+        String CORE_DEMO_PACKAGE="com.zmz.demo";
+
+        Set<String> packageSet = new HashSet<>();
+        Map<String, HandlerMapping> handlerMappingMap = BeanFactoryUtils.beansOfTypeIncludingAncestors(SpringContextUtil.getApplicationContext() , HandlerMapping.class);
+        for (HandlerMapping handlerMapping : handlerMappingMap.values()){
+            if (handlerMapping instanceof RequestMappingHandlerMapping){
+                RequestMappingHandlerMapping requestMappingHandlerMapping = (RequestMappingHandlerMapping) handlerMapping;
+                Map<RequestMappingInfo, HandlerMethod> handlerMethods = requestMappingHandlerMapping.getHandlerMethods();
+                for (Map.Entry<RequestMappingInfo, HandlerMethod> requestMappingInfoHandlerMethodEntry : handlerMethods.entrySet()){
+                    HandlerMethod mappingInfoValue = requestMappingInfoHandlerMethodEntry.getValue();
+                    String packageName = mappingInfoValue.getBeanType().getPackage().getName();
+                    if (!packageName.contains(SPRING_FOX_PACKAGE) && !packageName.contains(SPRING_PACKAGE) && !packageName.contains(SWAGGER_BOOTSTRAP_UI_PACKAGE) && !packageName.contains(CORE_PACKAGE) && !packageName.contains(CORE_DEMO_PACKAGE)){
+                        packageSet.add(packageName);
+                    }
+                }
+            }
+        }
+        return packageSet;
+    }
+    private void registerBean(String key,Docket obj){
+        log.info("registerBean - key: {}",key);
+        ApplicationContext context =  SpringContextUtil.getApplicationContext();
+        DefaultListableBeanFactory beanFactory = (DefaultListableBeanFactory)context.getAutowireCapableBeanFactory();
+        String beanName = "SwaggerDocketBean_"+key;
+        BeanDefinition beanDefinition = new GenericBeanDefinition();
+        beanDefinition.setBeanClassName(obj.getClass().getName());
+        beanDefinition.setScope("prototype");
+        ((GenericBeanDefinition) beanDefinition).setSource(obj);
+        ((GenericBeanDefinition) beanDefinition).setBeanClass(Docket.class);
+        beanFactory.registerBeanDefinition(beanName, beanDefinition);
+        context.getAutowireCapableBeanFactory().applyBeanPostProcessorsAfterInitialization(obj, beanName);
+        beanFactory.registerSingleton(beanName, obj);
+    }
+
+}
+
+```
+
+SwaggerHttpHeader 类，有的时候项目中需要定制公用的http header，参考如下配置：
+```java
+@Getter
+@Setter
+@Component
+@PropertySource(value = "classpath:swagger2.properties", ignoreResourceNotFound = true, encoding = "UTF-8")
+@ConfigurationProperties(prefix="swagger2.ui.header")
+public class SwaggerHttpHeader {
+    private List<String> name = new ArrayList<>();
+    private List<String> defaultValue = new ArrayList<>();
+    private List<String> description = new ArrayList<>();
+    private List<String> modelRef = new ArrayList<>();
+    private List<Boolean> required = new ArrayList<>();
+}
+```
+
+SpringContextUtil 类
+```java
+@Component(value="springContextUtil")
+public class SpringContextUtil implements ApplicationContextAware {
+
+    private SpringContextUtil(){}
+
+    private static ApplicationContext applicationContext = null;
+
+    private synchronized static void setSyncApplicationContext(ApplicationContext applicationContext) {
+        SpringContextUtil.applicationContext = applicationContext;
+    }
+
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        setSyncApplicationContext(applicationContext);
+    }
+
+    public static ApplicationContext getApplicationContext() {
+        return applicationContext;
+    }
+
+    public static Object getBean(String beanName) {
+        return applicationContext.getBean(beanName);
+    }
+
+    public static Object getBean(Class clazz) {
+        return applicationContext.getBean(clazz);
+    }
+
+}
+```
+
+Response 类,项目开发中定制化返回的Response
+```java
+@Setter
+@Getter
+@ApiModel(description = "Response data, will be null if HTTP.STATUS is not 1XX or 2XX")
+public class Response<T> {
+    @ApiModelProperty
+    private Meta meta;
+
+    @ApiModelProperty
+    private T data;
+}
+
+```
+
+Meta 类
+```java
+@Setter
+@Getter
+@ApiModel(value="ResponseMetaInfo")
+public class Meta {
+    @ApiModelProperty(value="completed time")
+    private long completedTime;
+
+    @ApiModelProperty(value="message list")
+    private List<Message> messages;
+}
+
+```
+
+Message 类
+```java
+@Setter
+@Getter
+@ToString
+@ApiModel(value="ResponseMessage")
+public class Message {
+
+    @ApiModelProperty(value="message code")
+    private String code;
+
+    @ApiModelProperty(value="message description")
+    private String description;
+
 }
 ```
 
@@ -109,22 +390,6 @@ logging.file.path=../logs/app
 #-----------------------------------------------------------------------------------
 #Below is for swagger
 swagger.enable = true
-```
-
-有的时候项目中需要定制允许的http header，参考如下配置(SwaggerConfig配置请参考项目源码)：
-```java
-@Getter
-@Setter
-@Component
-@PropertySource(value = "classpath:swagger2.properties", ignoreResourceNotFound = true, encoding = "UTF-8")
-@ConfigurationProperties(prefix="swagger2.ui.header")
-public class SwaggerHttpHeader {
-    private List<String> name = new ArrayList<>();
-    private List<String> defaultValue = new ArrayList<>();
-    private List<String> description = new ArrayList<>();
-    private List<String> modelRef = new ArrayList<>();
-    private List<Boolean> required = new ArrayList<>();
-}
 ```
 
 swagger2.properties :
@@ -292,7 +557,7 @@ Swagger-UI 除了提供接口可视化的功能外，还可以用于接口测试
 
 <div align="center"> <img src="https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/images/spring-boot-swagger2/swagger-ui-bug01.png"/> </div>
 
-2. 使用网站 http://editor.swagger.io/ 进行Yaml文件导出，我本机失效
+2. 使用网站 http://editor.swagger.io/ 进行Yaml文件导出，发现Local失效
 
 <div align="center"> <img src="https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/images/spring-boot-swagger2/swagger-ui-bug02.png"/> </div>
 
