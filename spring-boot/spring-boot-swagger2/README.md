@@ -11,6 +11,7 @@
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#23-Swagger-注解">2.3 Swagger 注解 </a><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#24-可视化接口文档">2.4 可视化接口文档</a><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#25-接口测试">2.5 接口测试</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#26-Yaml文件导出">2.6 Yaml文件导出</a><br/>
 </nav>
 
 ## 一、概念综述
@@ -33,8 +34,7 @@ Swagger 是一个规范框架，用于生成、描述、调用和可视化 RESTf
 
 下图为 swagger-ui 提供的文档可视化界面示例：
 
-<div align="center"> <img src="https://github.com/heibaiying/spring-samples-for-all/blob/master/pictures/Swagger_UI.png"/> </div>
-
+<div align="center"> <img src="https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/images/spring-boot-swagger2/Swagger_UI.png"/> </div>
 
 ### 1.3 关联关系
 
@@ -69,13 +69,15 @@ OpenAPI、Swagger、SpringFox 之间的关联关系可以表述为：**Swagger C
 2. 在 SwaggerConfig 配置类上添加 `@Profile({"dev","test"}) ` 注解，指明仅在开发环境和测试环境下激活此配置，并在打包部署时使用 spring.profiles.active 指明具体的环境。
 3. 在配置文件中配置自定义的开关参数，并在 SwaggerConfig 配置类上添加 `@ConditionalOnProperty(name = "swagger.enable", havingValue = "true") `，指明配置类的生效条件。@ConditionalOnProperty 注解能够控制某个配置类是否生效。具体操作是通过 name 和 havingValue 属性来实现，name 对应配置文件中的某个属性，如果该值为空，则返回 false；如果值不为空，则将该值与 havingValue 指定的值进行比较，如果一样则返回 true；否则返回 false。如果返回值为 false，则对应的配置不生效；为 true 则生效。
 
-以下是第一种开关配置方式的使用示例：
+以下是第一种开关配置方式的使用示例(为了方便看log，配置了logback和tomacat)：
 
 ```java
 /**
  * @description :  Swagger 配置类
  */
+@Slf4j
 @Configuration
+@PropertySource(value = "classpath:swagger2.properties", ignoreResourceNotFound = true, encoding = "UTF-8")
 @EnableSwagger2
 public class SwaggerConfig {
 
@@ -85,12 +87,79 @@ public class SwaggerConfig {
 ```
 
 application.properties :
-
 ```properties
-#swagger启用开关
+#-----------------------------------------------------------------------------------
+#Below is for Server and Tomcat config
+server.port=10190
+server.servlet.context-path=/app
+server.tomcat.max-threads=800
+server.tomcat.uri-encoding=UTF-8
+server.tomcat.basedir=../logs/tomcat
+server.tomcat.accesslog.enabled=true
+server.tomcat.accesslog.pattern=%t %a "%r" %s (%D ms)
+server.tomcat.accesslog.directory=access
+
+#-----------------------------------------------------------------------------------
+#Below is for Logback only
+logging.config=classpath:logback-config.xml
+logging.level.root=debug
+logging.file.name=spring-boot-swagger2
+logging.file.path=../logs/app
+
+#-----------------------------------------------------------------------------------
+#Below is for swagger
 swagger.enable = true
 ```
 
+有的时候项目中需要定制允许的http header，参考如下配置(SwaggerConfig配置请参考项目源码)：
+```java
+@Getter
+@Setter
+@Component
+@PropertySource(value = "classpath:swagger2.properties", ignoreResourceNotFound = true, encoding = "UTF-8")
+@ConfigurationProperties(prefix="swagger2.ui.header")
+public class SwaggerHttpHeader {
+    private List<String> name = new ArrayList<>();
+    private List<String> defaultValue = new ArrayList<>();
+    private List<String> description = new ArrayList<>();
+    private List<String> modelRef = new ArrayList<>();
+    private List<Boolean> required = new ArrayList<>();
+}
+```
+
+swagger2.properties :
+```properties
+#-----------------------------------------------------------------------------------
+#When Exist multiple basePackage, need to use "," to split them, like "com.zmz.example.ui.controller,com.zmz.example.api.controller"
+swagger2.basePackage = com.zmz
+swagger2.title = Demo API
+swagger2.description = Demo Swagger API
+swagger2.termsOfServiceUrl = http://api.zmz.com
+swagger2.version = 1.0
+swagger2.contact.name = XXX Support Team
+swagger2.contact.url = https://www.baidu.com/
+swagger2.contact.email = 123456789@qq.com
+
+#-----------------------------------------------------------------------------------
+#Below is for Configure Swagger UI API headers
+swagger2.ui.header.name[0] = Accept-Language
+swagger2.ui.header.defaultValue[0] = zh-CN
+swagger2.ui.header.description[0] = Accept-Language
+swagger2.ui.header.modelRef[0] = String
+swagger2.ui.header.required[0] = false
+
+swagger2.ui.header.name[1] = Authorization
+swagger2.ui.header.defaultValue[1] = Bearer abcdefghijklm0123456789
+swagger2.ui.header.description[1] = Authorization
+swagger2.ui.header.modelRef[1] = String
+swagger2.ui.header.required[1] = false
+
+swagger2.ui.header.name[2] = tx-id
+swagger2.ui.header.defaultValue[2] = abcde0123456
+swagger2.ui.header.description[2] = Transaction Id
+swagger2.ui.header.modelRef[2] = String
+swagger2.ui.header.required[2] = false
+```
 
 
 ### 2.3 Swagger 注解 
@@ -204,21 +273,19 @@ Swagger 为了最大程度防止对逻辑代码的侵入，基本都是依靠注
 
 ### 2.4 可视化接口文档
 
-接口文档访问地址：http://localhost:8080/swagger-ui.html ，文档主界面如下：
+接口文档访问地址：http://localhost:10190/app/swagger-ui.html ，文档主界面如下：
 
-<div align="center"> <img src="https://github.com/heibaiying/spring-samples-for-all/blob/master/pictures/swagger-ui-index.png"/> </div>
+<div align="center"> <img src="https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/images/spring-boot-swagger2/swagger-ui-index.png"/> </div>
 
 ### 2.5 接口测试
 
 Swagger-UI 除了提供接口可视化的功能外，还可以用于接口测试。点击对应接口的 `try it out` 按钮，然后输入对应的参数的值，最后点击下方的 `Execute` 按钮发送请求：
 
-<div align="center"> <img src="https://github.com/heibaiying/spring-samples-for-all/blob/master/pictures/swagger-try-it.png"/> </div>
-
-<div align="center"> <img src="https://github.com/heibaiying/spring-samples-for-all/blob/master/pictures/swagger-execute.png"/> </div>
-
-POST 接口可以直接修改 Model 对应的 Json 数据 ，然后点击下方的 `Execute` 按钮发送请求：
-
-<div align="center"> <img src="https://github.com/heibaiying/spring-samples-for-all/blob/master/pictures/swagger-post-try.png"/> </div>
+<div align="center"> <img src="https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/images/spring-boot-swagger2/swagger-try-it.png"/> </div>
+<div align="center"> <img src="https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/images/spring-boot-swagger2/swagger-execute.png"/> </div>
+<div align="center"> <img src="https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/images/spring-boot-swagger2/swagger-execute-response.png"/> </div>
 
 遗留问题部分：
-<div align="center"> <img src="https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/images/spring-boot-swagger2/bug-01.png"/> </div>
+<div align="center"> <img src="https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/images/spring-boot-swagger2/swagger-ui-bug01.png"/> </div>
+
+### 2.6 Yaml文件导出

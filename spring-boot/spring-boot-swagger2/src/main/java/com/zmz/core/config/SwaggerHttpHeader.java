@@ -19,12 +19,10 @@ import java.util.List;
 @PropertySource(value = "classpath:swagger2.properties", ignoreResourceNotFound = true, encoding = "UTF-8")
 @ConfigurationProperties(prefix="swagger2.ui.header")
 public class SwaggerHttpHeader {
-
     private List<String> name = new ArrayList<>();
     private List<String> defaultValue = new ArrayList<>();
     private List<String> description = new ArrayList<>();
     private List<String> modelRef = new ArrayList<>();
     private List<Boolean> required = new ArrayList<>();
-
 }
 
