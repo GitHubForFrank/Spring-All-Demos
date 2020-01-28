@@ -196,13 +196,13 @@ Spring Boot 支持在多个地方进行配置的定义，按照配置方式的�
 
 ## 七、效果演示
 
-本地是Dev启动，通过call controller 查看参数来自 application-dev.yml 文件, URL : `http://localhost:10190/app/yml`
+本地是Dev启动，通过查看call controller 返回数据判断是来自 application-dev.yml 文件, URL : `http://localhost:10190/app/yml`
 
 <div align="center"> <img src="https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/images/spring-boot-yml-profile/api-demo01.png"/> </div>
 
 ## 八、其他帮助
 
-properties 与 yal 在线互相转换： `https://toyaml.com/index.html`
+properties 与 Yaml 在线互相转换： `https://toyaml.com/index.html`
 
 <div align="center"> <img src="https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/images/spring-boot-yml-profile/toyaml.png"/> </div>
 
