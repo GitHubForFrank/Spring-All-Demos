@@ -225,7 +225,7 @@ public interface ProgrammerDao {
     @Insert("insert into programmer (name, age, salary, birthday) VALUES (#{name}, #{age}, #{salary}, #{birthday})")
     void save(Programmer programmer);
 
-    @Select("select * from programmer where name = #{id}")
+    @Select("select * from programmer where id = #{id}")
     Programmer selectById(int id);
 
     @Update("update programmer set name=#{name},age=#{age},salary=#{salary},birthday=#{birthday} where id=#{id}")
