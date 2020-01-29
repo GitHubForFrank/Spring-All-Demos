@@ -16,7 +16,7 @@
 
 ### 1.1 项目结构
 
-- 项目涉及表的建表语句放置在 resources 的 sql 文件夹下；
+- 项目涉及表的建表语句放置在 https://github.com/GitHubForFrank/Spring-All-Demos/tree/master/00-materials/database-scripts 下；
 
 - 关于 Mybatis SQL 的写法提供两种方式：
 

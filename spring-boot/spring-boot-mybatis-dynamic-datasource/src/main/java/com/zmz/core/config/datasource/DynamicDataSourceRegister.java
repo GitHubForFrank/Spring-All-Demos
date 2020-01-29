@@ -25,7 +25,7 @@ import java.util.Map;
 /**
  * 动态数据源注册
  * 实现 ImportBeanDefinitionRegistrar 实现数据源注册
- * 实现 EnvironmentAware 用于读取application.yml配置
+ * 实现 EnvironmentAware 用于读取application.properties 配置
  * @author ASNPHDG
  * @create 2020-01-13 11:38 AM
  */
