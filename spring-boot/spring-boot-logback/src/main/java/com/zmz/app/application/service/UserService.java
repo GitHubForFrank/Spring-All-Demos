@@ -1,6 +1,6 @@
-package com.zmz.application.service;
+package com.zmz.app.application.service;
 
-import com.zmz.domain.model.UserModel;
+import com.zmz.app.domain.model.UserModel;
 
 import java.util.List;
 

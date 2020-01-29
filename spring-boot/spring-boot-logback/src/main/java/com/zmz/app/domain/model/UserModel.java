@@ -1,4 +1,4 @@
-package com.zmz.domain.model;
+package com.zmz.app.domain.model;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -16,5 +16,15 @@ public class UserModel {
     private String dept;
     private String phone;
     private String website;
+
+    public UserModel() {
+    }
+
+    public UserModel(String name, String dept, String phone, String website) {
+        this.name = name;
+        this.dept = dept;
+        this.phone = phone;
+        this.website = website;
+    }
 
 }

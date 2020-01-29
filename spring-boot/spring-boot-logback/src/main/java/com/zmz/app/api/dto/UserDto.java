@@ -1,6 +1,6 @@
-package com.zmz.api.dto;
+package com.zmz.app.api.dto;
 
-import com.zmz.domain.model.UserModel;
+import com.zmz.app.domain.model.UserModel;
 import lombok.Getter;
 import lombok.Setter;
 

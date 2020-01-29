@@ -14,7 +14,7 @@
             <charset>UTF-8</charset>
         </encoder>
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>info</level>
+            <level>debug</level>
         </filter>
     </appender>
     <appender name="ASYNC_CONSOLE" class="ch.qos.logback.classic.AsyncAppender">
@@ -44,10 +44,20 @@
         <appender-ref ref="BASE" />
     </appender>
 
-    <!-- 日志输出级别 TRACE, DEBUG, INFO, WARN, ERROR, ALL 和 OFF -->
-    <root level="${log.level.root}">
-        <appender-ref ref="ASYNC_CONSOLE" />
-        <appender-ref ref="ASYNC_BASE"/>
-    </root>
+    <!-- dev(开发环境)开启console台输出log，同时将log打印到文件-->
+    <springProfile name="dev">
+        <!-- 日志输出级别 TRACE, DEBUG, INFO, WARN, ERROR, ALL 和 OFF -->
+        <root level="${log.level.root}">
+            <appender-ref ref="ASYNC_CONSOLE"/>
+            <appender-ref ref="ASYNC_BASE"/>
+        </root>
+    </springProfile>
+
+    <!-- sit(系统测试环境)，uat(User测试环境)，prod(生产环境)的时候将log打印到文件-->
+    <springProfile name="sit,uat,prod">
+        <root level="${log.level.root}">
+            <appender-ref ref="ASYNC_BASE"/>
+        </root>
+    </springProfile>
 
 </configuration>
