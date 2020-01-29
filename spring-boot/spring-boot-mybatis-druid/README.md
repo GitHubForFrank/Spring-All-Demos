@@ -364,4 +364,6 @@ public class DruidStatController {
 
 访问地址为 `http://localhost:10190/app/druid/login.html` ：
 
+<div align="center"> <img src="https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/images/spring-boot-mybatis-druid/druid-account.png"/> </div>
+
 <div align="center"> <img src="https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/images/spring-boot-mybatis-druid/druid.png"/> </div>
