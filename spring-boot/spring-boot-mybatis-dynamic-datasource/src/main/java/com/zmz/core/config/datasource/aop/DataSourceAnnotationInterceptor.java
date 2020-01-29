@@ -1,6 +1,6 @@
 package com.zmz.core.config.datasource.aop;
 
-import com.zmz.core.config.datasource.DynamicDataSourceContextHolder;
+import com.zmz.core.config.datasource.DataSourceContextHolder;
 import com.zmz.core.config.datasource.annotation.DataSource;
 import lombok.extern.slf4j.Slf4j;
 import org.aopalliance.intercept.MethodInterceptor;
@@ -16,7 +16,7 @@ import java.util.Map;
  * @create 2020-01-13 11:36 AM
  */
 @Slf4j
-public class DynamicDataSourceAnnotationInterceptor implements MethodInterceptor {
+public class DataSourceAnnotationInterceptor implements MethodInterceptor {
 
     /**
      * 缓存方法注解值
@@ -27,13 +27,13 @@ public class DynamicDataSourceAnnotationInterceptor implements MethodInterceptor
     public Object invoke(MethodInvocation invocation) throws Throwable {
         try {
             String datasource = determineDatasource(invocation);
-            if (! DynamicDataSourceContextHolder.containsDataSource(datasource)) {
+            if (! DataSourceContextHolder.containsDataSource(datasource)) {
                 log.info("数据源[{}]不存在，使用默认数据源 >", datasource);
             }
-            DynamicDataSourceContextHolder.setDataSourceRouterKey(datasource);
+            DataSourceContextHolder.setDataSourceRouterKey(datasource);
             return invocation.proceed();
         } finally {
-            DynamicDataSourceContextHolder.removeDataSourceRouterKey();
+            DataSourceContextHolder.removeDataSourceRouterKey();
         }
     }
 

@@ -1,5 +1,4 @@
-package com.zmz.app.infrastructure.repository.sqlserver;
-
+package com.zmz.app.infrastructure.repository.impl;
 
 import com.zmz.app.domain.model.UserModel;
 import com.zmz.app.domain.repository.UserRepository01;
@@ -18,6 +17,7 @@ import java.util.List;
  * @create 2020-01-03 22:55
  */
 @Repository
+@DataSource("slave1")
 public class UserRepository01Impl implements UserRepository01 {
 
     @Resource
@@ -38,7 +38,6 @@ public class UserRepository01Impl implements UserRepository01 {
     }
 
     @Override
-    @DataSource("slave1")
     public void create(UserModel userModel) {
         UserEntity userEntity = userTranslator.VO2E(null,userModel);
         userMapper.insert(userEntity);

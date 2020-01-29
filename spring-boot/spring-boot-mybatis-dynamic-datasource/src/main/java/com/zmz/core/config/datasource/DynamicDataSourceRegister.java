@@ -32,7 +32,6 @@ import java.util.Map;
 @Slf4j
 public class DynamicDataSourceRegister implements ImportBeanDefinitionRegistrar, EnvironmentAware {
 
-
     /**
      * 配置上下文（也可以理解为配置文件的获取工具）
      */
@@ -70,15 +69,15 @@ public class DynamicDataSourceRegister implements ImportBeanDefinitionRegistrar,
     @Override
     public void registerBeanDefinitions(AnnotationMetadata annotationMetadata, BeanDefinitionRegistry beanDefinitionRegistry) {
         // 获取所有数据源配置
-        Map config, defauleDataSourceProperties;
-        defauleDataSourceProperties = binder.bind("spring.datasource.master", Map.class).get();
+        Map config, defaultDataSourceProperties;
+        defaultDataSourceProperties = binder.bind("spring.datasource.master", Map.class).get();
         // 获取数据源类型
         String typeStr = evn.getProperty("spring.datasource.master.type");
         // 获取数据源类型
         Class<? extends DataSource> clazz = getDataSourceType(typeStr);
         // 绑定默认数据源参数 也就是主数据源
-        DataSource consumerDatasource, defaultDatasource = bind(clazz, defauleDataSourceProperties);
-        DynamicDataSourceContextHolder.dataSourceIds.add("master");
+        DataSource consumerDatasource, defaultDatasource = bind(clazz, defaultDataSourceProperties);
+        DataSourceContextHolder.dataSourceIds.add("master");
         log.info("注册默认数据源成功");
         // 获取其他数据源配置
         List<Map> configs = binder.bind("spring.datasource.cluster", Bindable.listOf(Map.class)).get();
@@ -86,14 +85,14 @@ public class DynamicDataSourceRegister implements ImportBeanDefinitionRegistrar,
         for (int i = 0; i < configs.size(); i++) {
             config = configs.get(i);
             clazz = getDataSourceType((String) config.get("type"));
-            defauleDataSourceProperties = config;
+            defaultDataSourceProperties = config;
             // 绑定参数
-            consumerDatasource = bind(clazz, defauleDataSourceProperties);
+            consumerDatasource = bind(clazz, defaultDataSourceProperties);
             // 获取数据源的key，以便通过该key可以定位到数据源
             String key = config.get("key").toString();
             customDataSources.put(key, consumerDatasource);
             // 数据源上下文，用于管理数据源与记录已经注册的数据源key
-            DynamicDataSourceContextHolder.dataSourceIds.add(key);
+            DataSourceContextHolder.dataSourceIds.add(key);
             log.info("注册数据源 {} 成功", key);
         }
         // bean定义类
@@ -129,7 +128,8 @@ public class DynamicDataSourceRegister implements ImportBeanDefinitionRegistrar,
             }
             return type;
         } catch (Exception e) {
-            throw new IllegalArgumentException("can not resolve class with type: " + typeStr); //无法通过反射获取class对象的情况则抛出异常，该情况一般是写错了，所以此次抛出一个runtimeexception
+            //无法通过反射获取class对象的情况则抛出异常，该情况一般是写错了，所以此次抛出一个runtimeexception
+            throw new IllegalArgumentException("can not resolve class with type: " + typeStr);
         }
     }
 

@@ -1,12 +1,11 @@
-package com.zmz.app.infrastructure.repository.sqlserver;
+package com.zmz.app.infrastructure.repository.impl;
 
 
 import com.zmz.app.domain.model.UserModel;
-import com.zmz.app.domain.repository.UserRepository02;
+import com.zmz.app.domain.repository.UserRepository;
 import com.zmz.app.infrastructure.dao.entity.UserEntity;
 import com.zmz.app.infrastructure.dao.mapper.UserMapper;
 import com.zmz.app.infrastructure.repository.translator.UserTranslator;
-import com.zmz.core.config.datasource.annotation.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -18,7 +17,7 @@ import java.util.List;
  * @create 2020-01-03 22:55
  */
 @Repository
-public class UserRepository02Impl implements UserRepository02 {
+public class UserRepositoryImpl implements UserRepository {
 
     @Resource
     private UserMapper userMapper;
@@ -38,7 +37,6 @@ public class UserRepository02Impl implements UserRepository02 {
     }
 
     @Override
-    @DataSource("slave2")
     public void create(UserModel userModel) {
         UserEntity userEntity = userTranslator.VO2E(null,userModel);
         userMapper.insert(userEntity);

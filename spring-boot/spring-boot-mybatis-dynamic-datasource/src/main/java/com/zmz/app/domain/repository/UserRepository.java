@@ -1,6 +1,5 @@
 package com.zmz.app.domain.repository;
 
-
 import com.zmz.app.domain.model.UserModel;
 
 import java.util.List;

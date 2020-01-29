@@ -10,7 +10,7 @@ import java.util.List;
  * @create 2020-01-13 11:40 AM
  */
 @Slf4j
-public class DynamicDataSourceContextHolder {
+public class DataSourceContextHolder {
 
     /**
      * 存储已经注册的数据源的key
@@ -27,7 +27,6 @@ public class DynamicDataSourceContextHolder {
     }
 
     public static void setDataSourceRouterKey (String dataSourceRouterKey) {
-        log.info("切换至{}数据源", dataSourceRouterKey);
         HOLDER.set(dataSourceRouterKey);
     }
 
