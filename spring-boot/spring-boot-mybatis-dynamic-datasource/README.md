@@ -98,7 +98,7 @@ spring boot 与 mybatis 版本的对应关系：
 
 Spring Boot 2.x 版本默认采用 Hikari 作为数据库连接池，Hikari 是目前 Java 平台性能最好的连接池，性能好于 druid。
 
-如下 tomcat server 、 logback 、 DataSource、 mybatis 相关配置：
+如下是 tomcat server 、 logback 、 DataSource、 mybatis 的相关配置：
 
 ```properties
 #-----------------------------------------------------------------------------------
@@ -149,7 +149,7 @@ mybatis.configLocation = classpath:/mybatis/config/mybatis-config.xml
 
 ```
 
-### 2.2  核心配置文件
+### 2.2 核心配置文件
 
 注解类： 
 
@@ -502,7 +502,7 @@ public interface Translator<T, V> {
 ```
 
 
-### 2.3  单元测试
+### 2.3 单元测试
 
 新建 UserMapper.java 和 UserMapper.xml，及其测试类：
 
@@ -515,51 +515,6 @@ public interface UserMapper {
     void deleteById(Long id);
     void updateByPrimaryKeySelective(UserEntity user);
 }
-```
-
-Repository 类，使用数据源01：
-
-```java
-@Repository
-@DataSource("slave1")
-public class UserRepository01Impl implements UserRepository01 {
-
-    @Resource
-    private UserMapper userMapper;
-    @Autowired
-    private UserTranslator userTranslator;
-
-    @Override
-    public UserModel queryById(long id) {
-        UserEntity userEntity = userMapper.selectByPrimaryKey(id);
-        return userTranslator.E2VO(userEntity,null);
-    }
-
-    @Override
-    public List<UserModel> queryAllUser() {
-        List<UserEntity> entityList = userMapper.queryAllUser();
-        return userTranslator.E2VOs(entityList,null);
-    }
-
-    @Override
-    public void create(UserModel userModel) {
-        UserEntity userEntity = userTranslator.VO2E(null,userModel);
-        userMapper.insert(userEntity);
-    }
-
-    @Override
-    public void delete(long id) {
-        userMapper.deleteById(id);
-    }
-
-    @Override
-    public void updateUser(UserModel userModel) {
-        UserEntity userEntity = userTranslator.VO2E(null,userModel);
-        userMapper.updateByPrimaryKeySelective(userEntity);
-    }
-
-}
-
 ```
 
 ```xml
@@ -625,6 +580,50 @@ public class UserRepository01Impl implements UserRepository01 {
 </mapper>
 ```
 
+新建 Repository 类，如下是使用数据源slave1的UserRepository01的实现类UserRepository01Impl：
+
+```java
+@Repository
+@DataSource("slave1")
+public class UserRepository01Impl implements UserRepository01 {
+
+    @Resource
+    private UserMapper userMapper;
+    @Autowired
+    private UserTranslator userTranslator;
+
+    @Override
+    public UserModel queryById(long id) {
+        UserEntity userEntity = userMapper.selectByPrimaryKey(id);
+        return userTranslator.E2VO(userEntity,null);
+    }
+
+    @Override
+    public List<UserModel> queryAllUser() {
+        List<UserEntity> entityList = userMapper.queryAllUser();
+        return userTranslator.E2VOs(entityList,null);
+    }
+
+    @Override
+    public void create(UserModel userModel) {
+        UserEntity userEntity = userTranslator.VO2E(null,userModel);
+        userMapper.insert(userEntity);
+    }
+
+    @Override
+    public void delete(long id) {
+        userMapper.deleteById(id);
+    }
+
+    @Override
+    public void updateUser(UserModel userModel) {
+        UserEntity userEntity = userTranslator.VO2E(null,userModel);
+        userMapper.updateByPrimaryKeySelective(userEntity);
+    }
+
+}
+
+```
 
 测试类：
 
