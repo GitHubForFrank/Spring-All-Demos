@@ -42,7 +42,7 @@ CREATE TABLE `tbl_user` (
 
 ```
 
-文件放在了 `https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/database-scripts`
+文件放在了 https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/database-scripts
 
 2. 为了演示 Druid 控制台的功能，项目以 Web 的方式构建。
 
