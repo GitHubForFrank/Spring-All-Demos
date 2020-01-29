@@ -8,7 +8,7 @@
     </insert>
 
     <select id="selectById" resultType="com.zmz.app.bean.Programmer">
-      select * from programmer where name = #{id}
+      select * from programmer where id = #{id}
     </select>
 
     <update id="modify">

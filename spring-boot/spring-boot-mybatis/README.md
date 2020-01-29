@@ -24,7 +24,7 @@
 
    **注解写法**：对应的类为 Programmer.java ，用 MybatisAnnotationTest 进行测试。
 
-<div align="center"> <img src="https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/images/pring-boot-mybatis/project-structure.png"/> </div>
+<div align="center"> <img src="https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/images/spring-boot-mybatis/project-structure.png"/> </div>
 
 ### 1.2 主要依赖
 
