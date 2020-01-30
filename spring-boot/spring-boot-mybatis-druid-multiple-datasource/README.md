@@ -5,7 +5,7 @@
 <a href="#一项目说明">一、项目说明</a><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#11-项目结构">1.1 项目结构</a><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#12-主要依赖">1.2 主要依赖</a><br/>
-<a href="#二整合-Mybatis 实现动态数据源">二、整合 Mybatis 实现动态数据源</a><br/>
+<a href="#二整合-Mybatis-实现动态数据源">二、整合 Mybatis 实现动态数据源</a><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#21-配置applicationproperties和mybatisproperties">2.1 配置application.properties和mybatis.properties</a><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#22-核心配置文件">2.2 核心配置文件</a><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#23-单元测试">2.3 单元测试</a><br/>
@@ -18,7 +18,7 @@
 
 - 项目涉及表的建表语句放置在 https://github.com/GitHubForFrank/Spring-All-Demos/tree/master/00-materials/database-scripts 下；
 
-- 本项目中创建了三个不同的repository分别对应三个不同的SqlServer数据源，是本人在百度云服务器创建的数据库，已经做了内网穿透，公网即可访问。至于百度云服务器到期日待定。三个repository共用一个Mapper文件（即三个数据库中创建了相同结构的表）：
+- 本项目中创建了2个不同的repository分别对应2个不同的SqlServer数据源，是本人在百度云服务器创建的数据库，已经做了内网穿透，公网即可访问。至于百度云服务器到期日待定。2个repository共用一个Mapper文件（即三个数据库中创建了相同结构的表）：
 
 <div align="center"> <img src="https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/images/spring-boot-mybatis-druid-multiple-datasource/project-structure.png"/> </div>
 
@@ -32,51 +32,81 @@
 所以 Mybatis 的 starter 命名为 mybatis-spring-boot-starter，如果有自定义 starter 需求，也需要按照此命名规则进行命名。
 
 ```xml
-<!-- 单元测试 -->
-<dependency>
-	<groupId>junit</groupId>
-	<artifactId>junit</artifactId>
-	<version>4.12</version>
-	<scope>test</scope>
-</dependency>
-<dependency>
-	<groupId>org.springframework.boot</groupId>
-	<artifactId>spring-boot-starter-test</artifactId>
-	<scope>test</scope>
-</dependency>
-<!-- Spring Boot 依赖-->
-<dependency>
-	<groupId>org.springframework.boot</groupId>
-	<artifactId>spring-boot-starter-aop</artifactId>
-</dependency>
-<!-- Logback 依赖 -->
-<dependency>
-	<groupId>ch.qos.logback</groupId>
-	<artifactId>logback-core</artifactId>
-	<version>${logback.version}</version>
-</dependency>
-<dependency>
-	<groupId>ch.qos.logback</groupId>
-	<artifactId>logback-classic</artifactId>
-	<version>${logback.version}</version>
-</dependency>
-<!-- Mybatis 依赖 -->
-<dependency>
-	<groupId>org.mybatis.spring.boot</groupId>
-	<artifactId>mybatis-spring-boot-starter</artifactId>
-	<version>1.3.2</version>
-</dependency>
-<!-- 数据库 依赖 -->
-<dependency>
-	<groupId>com.microsoft.sqlserver</groupId>
-	<artifactId>mssql-jdbc</artifactId>
-	<version>7.2.2.jre8</version>
-</dependency>
-<!-- 其他依赖 -->
-<dependency>
-	<groupId>org.projectlombok</groupId>
-	<artifactId>lombok</artifactId>
-</dependency>
+<properties>
+	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+	<java.version>1.8</java.version>
+	<logback.version>1.2.3</logback.version>
+	<mybatis-plus-boot-starter.version>3.0.5</mybatis-plus-boot-starter.version>
+</properties>
+
+<dependencies>
+	<!-- 单元测试 -->
+	<dependency>
+		<groupId>junit</groupId>
+		<artifactId>junit</artifactId>
+		<version>4.12</version>
+		<scope>test</scope>
+	</dependency>
+	<dependency>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-test</artifactId>
+		<scope>test</scope>
+	</dependency>
+
+	<!-- Spring Boot 配置-->
+	<dependency>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-aop</artifactId>
+	</dependency>
+	<dependency>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-web</artifactId>
+	</dependency>
+
+	<!-- Logback 依赖-->
+	<dependency>
+		<groupId>ch.qos.logback</groupId>
+		<artifactId>logback-core</artifactId>
+		<version>${logback.version}</version>
+	</dependency>
+	<dependency>
+		<groupId>ch.qos.logback</groupId>
+		<artifactId>logback-classic</artifactId>
+		<version>${logback.version}</version>
+	</dependency>
+
+	<!-- Mybatis依赖 -->
+	<dependency>
+		<groupId>org.mybatis.spring.boot</groupId>
+		<artifactId>mybatis-spring-boot-starter</artifactId>
+		<version>1.3.2</version>
+	</dependency>
+	<dependency>
+		<groupId>com.baomidou</groupId>
+		<artifactId>mybatis-plus-boot-starter</artifactId>
+		<version>${mybatis-plus-boot-starter.version}</version>
+	</dependency>
+
+	<!-- 数据库相关依赖 -->
+	<dependency>
+		<groupId>com.alibaba</groupId>
+		<artifactId>druid-spring-boot-starter</artifactId>
+		<version>1.1.10</version>
+	</dependency>
+	<dependency>
+		<groupId>com.microsoft.sqlserver</groupId>
+		<artifactId>mssql-jdbc</artifactId>
+		<version>7.2.2.jre8</version>
+	</dependency>
+
+	<!-- 其他依赖 -->
+	<dependency>
+		<groupId>org.projectlombok</groupId>
+		<artifactId>lombok</artifactId>
+	</dependency>
+
+</dependencies>
 ```
 
 spring boot 与 mybatis 版本的对应关系：
