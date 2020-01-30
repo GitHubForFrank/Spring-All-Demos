@@ -5,6 +5,16 @@
 
 本项目仓库提供Spring框架的的常用整合用例，包括单框架的使用，各个模块无依赖，均可单独运行。
 
+**特别说明**：
+
+- 项目涉及表的建表语句放置在 https://github.com/GitHubForFrank/Spring-All-Demos/tree/master/00-materials/database-scripts 文件夹下；
+
+- 项目中目前用到的数据库有SqlServer和MySql，本人在百度云服务器已经创建的对应数据库，已经做了内网穿透，公网即可访问。至于百度云服务器到期日待定。如果想要创建表，希望自己本地搭建数据库，次数共享具有对数据的CRUD权限的账号密码：
+
+&nbsp;&nbsp;账号：kong
+
+&nbsp;&nbsp;密码：2020Jan11
+
 
 **版本说明**：
 
@@ -40,9 +50,9 @@ spring-cloud：Finchley.SR2
 | [spring-boot-memcached](https://github.com/GitHubForFrank/spring-all-demos/tree/master/spring-boot/spring-boot-memcached) | spring-boot 整合 memcached| [Xmemcached](https://github.com/killme2008/xmemcached/wiki/Xmemcached%20%E4%B8%AD%E6%96%87%E7%94%A8%E6%88%B7%E6%8C%87%E5%8D%97) |
 | [spring-boot-mybatis](https://github.com/GitHubForFrank/spring-all-demos/tree/master/spring-boot/spring-boot-mybatis) | spring-boot+HikariDataSources 整合 mybatis | [Mybatis-Spring](http://www.mybatis.org/spring/zh/index.html)<br/>[Mybatis-Spring-Boot-Autoconfigure](http://www.mybatis.org/spring-boot-starter/mybatis-spring-boot-autoconfigure/) |
 | [spring-boot-mybatis-druid](https://github.com/GitHubForFrank/spring-all-demos/tree/master/spring-boot/spring-boot-mybatis-druid) | spring-boot+DruidDataSource 整合 mybatis| [Alibaba druid](https://github.com/alibaba/druid/wiki/%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98)<br/>[druid-spring-boot-starter](https://github.com/alibaba/druid/tree/master/druid-spring-boot-starter) |
-| [spring-boot-mybatis-druid-atomikos](https://github.com/GitHubForFrank/spring-all-demos/tree/master/spring-boot/spring-boot-mybatis-druid-atomikos) | spring-boot & mybatis 实现动态数据源,并且实现分布式事务| [Alibaba druid](https://github.com/alibaba/druid/wiki/%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98)<br/>[druid-spring-boot-starter](https://github.com/alibaba/druid/tree/master/druid-spring-boot-starter) |
-| [spring-boot-mybatis-druid-multiple-datasource](https://github.com/GitHubForFrank/spring-all-demos/tree/master/spring-boot/spring-boot-mybatis-druid-multiple-datasource) | spring-boot & mybatis & druid 实现多数据源。| [Alibaba druid](https://github.com/alibaba/druid/wiki/%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98)<br/>[druid-spring-boot-starter](https://github.com/alibaba/druid/tree/master/druid-spring-boot-starter) |
-| [spring-boot-mybatis-dynamic-datasource](https://github.com/GitHubForFrank/spring-all-demos/tree/master/spring-boot/spring-boot-mybatis-dynamic-datasource) | spring-boot 整合 mybatis 实现动态数据源。支持DruidDataSource和+HikariDataSource | [Mybatis-Spring](http://www.mybatis.org/spring/zh/index.html)<br/>[Mybatis-Spring-Boot-Autoconfigure](http://www.mybatis.org/spring-boot-starter/mybatis-spring-boot-autoconfigure/) |
+| [spring-boot-mybatis-druid-atomikos](https://github.com/GitHubForFrank/spring-all-demos/tree/master/spring-boot/spring-boot-mybatis-druid-atomikos) | spring-boot & mybatis 实现动态数据源,并且实现分布式事务 | [Alibaba druid](https://github.com/alibaba/druid/wiki/%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98)<br/>[druid-spring-boot-starter](https://github.com/alibaba/druid/tree/master/druid-spring-boot-starter) |
+| [spring-boot-mybatis-druid-multiple-datasource](https://github.com/GitHubForFrank/spring-all-demos/tree/master/spring-boot/spring-boot-mybatis-druid-multiple-datasource) | spring-boot & mybatis & druid 实现多数据源| [Alibaba druid](https://github.com/alibaba/druid/wiki/%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98)<br/>[druid-spring-boot-starter](https://github.com/alibaba/druid/tree/master/druid-spring-boot-starter) |
+| [spring-boot-mybatis-dynamic-datasource](https://github.com/GitHubForFrank/spring-all-demos/tree/master/spring-boot/spring-boot-mybatis-dynamic-datasource) | spring-boot 整合 mybatis 实现动态数据源<br/>同时支持DruidDataSource和HikariDataSource | [Mybatis-Spring](http://www.mybatis.org/spring/zh/index.html)<br/>[Mybatis-Spring-Boot-Autoconfigure](http://www.mybatis.org/spring-boot-starter/mybatis-spring-boot-autoconfigure/) |
 | [spring-boot-rabbitmq](https://github.com/GitHubForFrank/spring-all-demos/tree/master/spring-boot/spring-boot-rabbitmq) | spring-boot 整合 rabbitmq| [RabbitMQ support](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-rabbitmq) |
 | [spring-boot-redis](https://github.com/GitHubForFrank/spring-all-demos/tree/master/spring-boot/spring-boot-redis) | spring-boot 整合 redis | [Working with NoSQL Technologies](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-nosql) |
 | [spring-boot-swagger2](https://github.com/GitHubForFrank/spring-all-demos/tree/master/spring-boot/spring-boot-swagger2) | spring-boot 集成 Swagger2 打造在线接口文档| [Springfox Reference Documentation](http://springfox.github.io/springfox/docs/current/) |
