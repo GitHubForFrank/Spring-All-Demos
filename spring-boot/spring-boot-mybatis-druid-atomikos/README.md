@@ -683,7 +683,7 @@ public class MultipleDataSourceTest {
 
 ### 3.2 测试 Druid 数据源
 
-访问 `http://localhost:10190/app/druid/index.html`  ，可以在数据源监控页面看到两个数据源已配置成功，同时参数也与我们在 yml 中配置的完全一致。
+访问 `http://localhost:10190/app/druid/index.html`  ，可以在数据源监控页面看到两个数据源已配置成功，同时参数也与我们在 properties 中配置的完全一致。
 
 <div align="center"> <img src="https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/images/spring-boot-mybatis-druid-atomikos/druid-mysql.png"/> </div>
 
