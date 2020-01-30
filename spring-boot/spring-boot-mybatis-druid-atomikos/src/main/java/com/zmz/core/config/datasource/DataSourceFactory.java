@@ -1,8 +1,8 @@
-package com.zmz.core.config;
+package com.zmz.core.config.datasource;
 
 import com.alibaba.druid.pool.xa.DruidXADataSource;
 import com.atomikos.jdbc.AtomikosDataSourceBean;
-import com.zmz.app.constant.Data;
+import com.zmz.core.config.datasource.annotation.DataSourceEnum;
 import org.apache.ibatis.logging.stdout.StdOutImpl;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionFactoryBean;
@@ -25,10 +25,8 @@ import java.util.Map;
 @MapperScan(basePackages = DataSourceFactory.BASE_PACKAGES, sqlSessionTemplateRef = "sqlSessionTemplate")
 public class DataSourceFactory {
 
-    static final String BASE_PACKAGES = "com.zmz.app.dao";
-
+    static final String BASE_PACKAGES = "com.zmz.app.infrastructure.dao.mapper";
     private static final String MAPPER_LOCATION = "classpath:mappers/*.xml";
-
 
     /***
      * 创建 DruidXADataSource 1 用@ConfigurationProperties自动配置属性
@@ -36,6 +34,7 @@ public class DataSourceFactory {
     @Bean
     @ConfigurationProperties("spring.datasource.druid.db1")
     public DataSource druidDataSourceOne() {
+        DataSourceContextHolder.dataSourceIds.add(DataSourceEnum.MASTER.getValue());
         return new DruidXADataSource();
     }
 
@@ -45,6 +44,7 @@ public class DataSourceFactory {
     @Bean
     @ConfigurationProperties("spring.datasource.druid.db2")
     public DataSource druidDataSourceTwo() {
+        DataSourceContextHolder.dataSourceIds.add(DataSourceEnum.SLAVE.getValue());
         return new DruidXADataSource();
     }
 
@@ -71,7 +71,6 @@ public class DataSourceFactory {
         return sourceBean;
     }
 
-
     /**
      * @param dataSourceOne 数据源1
      * @return 数据源1的会话工厂
@@ -81,17 +80,14 @@ public class DataSourceFactory {
         return createSqlSessionFactory(dataSourceOne);
     }
 
-
     /**
      * @param dataSourceTwo 数据源2
      * @return 数据源2的会话工厂
      */
     @Bean
-    public SqlSessionFactory sqlSessionFactoryTwo(DataSource dataSourceTwo)
-            throws Exception {
+    public SqlSessionFactory sqlSessionFactoryTwo(DataSource dataSourceTwo) throws Exception {
         return createSqlSessionFactory(dataSourceTwo);
     }
-
 
     /***
      * sqlSessionTemplate与Spring事务管理一起使用，以确保使用的实际SqlSession是与当前Spring事务关联的,
@@ -102,9 +98,8 @@ public class DataSourceFactory {
     @Bean
     public CustomSqlSessionTemplate sqlSessionTemplate(SqlSessionFactory sqlSessionFactoryOne, SqlSessionFactory sqlSessionFactoryTwo) {
         Map<Object, SqlSessionFactory> sqlSessionFactoryMap = new HashMap<>();
-        sqlSessionFactoryMap.put(Data.DATASOURCE1, sqlSessionFactoryOne);
-        sqlSessionFactoryMap.put(Data.DATASOURCE2, sqlSessionFactoryTwo);
-
+        sqlSessionFactoryMap.put(DataSourceEnum.MASTER.getValue(), sqlSessionFactoryOne);
+        sqlSessionFactoryMap.put(DataSourceEnum.SLAVE.getValue(), sqlSessionFactoryTwo);
         CustomSqlSessionTemplate customSqlSessionTemplate = new CustomSqlSessionTemplate(sqlSessionFactoryOne);
         customSqlSessionTemplate.setTargetSqlSessionFactories(sqlSessionFactoryMap);
         return customSqlSessionTemplate;
@@ -124,11 +119,11 @@ public class DataSourceFactory {
         configuration.setMapUnderscoreToCamelCase(true);
         configuration.setLogImpl(StdOutImpl.class);
         factoryBean.setConfiguration(configuration);
-        /* *
-         * 采用个如下方式配置属性的时候一定要保证已经进行数据源的配置(setDataSource)和数据源和MapperLocation配置(setMapperLocations)
-         * factoryBean.getObject().getConfiguration().setMapUnderscoreToCamelCase(true);
-         * factoryBean.getObject().getConfiguration().setLogImpl(StdOutImpl.class);
-         **/
+
+        // 采用个如下方式配置属性的时候一定要保证已经进行数据源的配置(setDataSource)和数据源和MapperLocation配置(setMapperLocations)
+        // factoryBean.getObject().getConfiguration().setMapUnderscoreToCamelCase(true);
+        // factoryBean.getObject().getConfiguration().setLogImpl(StdOutImpl.class);
+
         return factoryBean.getObject();
     }
 }

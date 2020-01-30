@@ -1,4 +1,4 @@
-package com.zmz.core.config;
+package com.zmz.core.config.datasource;
 
 import com.atomikos.icatch.jta.UserTransactionImp;
 import com.atomikos.icatch.jta.UserTransactionManager;
@@ -27,7 +27,7 @@ public class XATransactionManagerConfig {
         return userTransactionImp;
     }
 
-    @Bean(initMethod = "init", destroyMethod = "close")
+    @Bean
     public TransactionManager atomikosTransactionManager() {
         UserTransactionManager userTransactionManager = new UserTransactionManager();
         userTransactionManager.setForceShutdown(false);
@@ -35,8 +35,7 @@ public class XATransactionManagerConfig {
     }
 
     @Bean
-    public PlatformTransactionManager transactionManager(UserTransaction userTransaction,
-                                                         TransactionManager transactionManager) {
+    public PlatformTransactionManager transactionManager(UserTransaction userTransaction,TransactionManager transactionManager) {
         return new JtaTransactionManager(userTransaction, transactionManager);
     }
 }

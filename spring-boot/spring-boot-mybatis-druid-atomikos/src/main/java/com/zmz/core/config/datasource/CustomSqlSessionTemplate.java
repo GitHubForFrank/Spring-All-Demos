@@ -1,4 +1,4 @@
-package com.zmz.core.config;
+package com.zmz.core.config.datasource;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.cursor.Cursor;
@@ -76,11 +76,10 @@ public class CustomSqlSessionTemplate extends SqlSessionTemplate {
     /***
      *  获取当前使用数据源对应的会话工厂
      */
-
     @Override
     public SqlSessionFactory getSqlSessionFactory() {
 
-        String dataSourceKey = DataSourceContextHolder.getDataSourceKey();
+        String dataSourceKey = DataSourceContextHolder.getDataSourceRouterKey();
         log.info("当前会话工厂 : {}", dataSourceKey);
         SqlSessionFactory targetSqlSessionFactory = targetSqlSessionFactories.get(dataSourceKey);
         if (targetSqlSessionFactory != null) {
@@ -98,7 +97,6 @@ public class CustomSqlSessionTemplate extends SqlSessionTemplate {
     /**
      * 这个方法的实现和父类的实现是基本一致的，唯一不同的就是在getSqlSession方法传参中获取会话工厂的方式
      */
-
     private class SqlSessionInterceptor implements InvocationHandler {
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {

@@ -1,35 +1,40 @@
-# Spring Boot 整合 Mybatis 实现多数据源
-
+# Spring Boot + Druid + Mybatis + Atomikos 配置多数据源 并支持分布式事务
 
 <nav>
-<a href="#一项目说明">一、项目说明</a><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#11-项目结构">1.1 项目结构</a><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#12-主要依赖">1.2 主要依赖</a><br/>
-<a href="#二整合-Mybatis-实现动态数据源">二、整合 Mybatis 实现动态数据源</a><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#21-配置applicationproperties和mybatisproperties">2.1 配置application.properties和mybatis.properties</a><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#22-核心配置文件">2.2 核心配置文件</a><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#23-单元测试">2.3 单元测试</a><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#24-其他参考">2.4 其他参考</a><br/>
+<a href="#一项目综述">一、项目综述</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#11-项目说明">1.1 项目说明</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#12-项目结构">1.2 项目结构</a><br/>
+<a href="#二配置多数据源并支持分布式事务">二、配置多数据源并支持分布式事务</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#21--导入基本依赖">2.1  导入基本依赖</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#22-配置多数据源">2.2 配置多数据源</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#23-实现多数据源">2.3 实现多数据源</a><br/>
+<a href="#三测试整合结果">三、测试整合结果</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#31--单元测试分布式事务和常规查询">3.1  单元测试分布式事务和常规查询</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#32-测试-Druid-数据源">3.2 测试 Druid 数据源</a><br/>
+<a href="#四JTA与两阶段提交">四、JTA与两阶段提交</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#41-XA-与-JTA">4.1 XA 与 JTA</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#42-两阶段提交">4.2 两阶段提交</a><br/>
+<a href="#五常见整合异常">五、常见整合异常</a><br/>
 </nav>
 
-## 一、项目说明
+## 一、项目综述
 
-### 1.1 项目结构
+### 1.1 项目说明
 
-- 项目涉及表的建表语句放置在 https://github.com/GitHubForFrank/Spring-All-Demos/tree/master/00-materials/database-scripts 下；
+本用例基于 Spring Boot + Druid + Mybatis 配置多数据源，并采用 JTA 实现分布式事务。
 
-- 本项目中创建了2个不同的repository分别对应2个不同的SqlServer数据源，是本人在百度云服务器创建的数据库，已经做了内网穿透，公网即可访问。至于百度云服务器到期日待定。2个repository共用一个Mapper文件（即2个数据库中创建了相同结构的表）：
+### 1.2 项目结构
 
-<div align="center"> <img src="https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/images/spring-boot-mybatis-druid-multiple-datasource/project-structure.png"/> </div>
+主要配置如下：
 
-### 1.2 主要依赖
+<div align="center"> <img src="https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/images/spring-boot-mybatis-druid-atomikos/project-structure.png"/> </div>
 
-按照 Spring 官方对于自定义的 starter 命名规范的要求：
 
-- 官方的 starter 命名：spring-boot-starter-XXXX
-- 其他第三方 starter 命名：XXXX-spring-boot-starte
+## 二、配置多数据源并支持分布式事务
 
-所以 Mybatis 的 starter 命名为 mybatis-spring-boot-starter，如果有自定义 starter 需求，也需要按照此命名规则进行命名。
+### 2.1  导入基本依赖
+
+除了 Mybatis 、Durid 等基本依赖外，由于我们是依靠切面来实现动态数据源的切换，所以还需要导入 AOP 依赖。另外还需要导入 spring-boot-starter-jta-atomikos，Spring Boot 通过 [Atomkos](http://www.atomikos.com/) 或 [Bitronix](http://docs.codehaus.org/display/BTM/Home) 等内嵌事务管理器来支持跨多个 XA 资源的分布式  JTA 事务，当发现 JTA 的依赖和环境时，Spring  Boot 将使用 Spring 的 JtaTransactionManager 来管理事务，并且自动配置的 JMS，DataSource 和 JPA Beans 也会被升级以支持 XA 事务。
 
 ```xml
 <properties>
@@ -37,7 +42,6 @@
 	<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 	<java.version>1.8</java.version>
 	<logback.version>1.2.3</logback.version>
-	<mybatis-plus-boot-starter.version>3.0.5</mybatis-plus-boot-starter.version>
 </properties>
 
 <dependencies>
@@ -63,17 +67,10 @@
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-web</artifactId>
 	</dependency>
-
-	<!-- Logback 依赖-->
+	<!--分布式事务依赖-->
 	<dependency>
-		<groupId>ch.qos.logback</groupId>
-		<artifactId>logback-core</artifactId>
-		<version>${logback.version}</version>
-	</dependency>
-	<dependency>
-		<groupId>ch.qos.logback</groupId>
-		<artifactId>logback-classic</artifactId>
-		<version>${logback.version}</version>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-jta-atomikos</artifactId>
 	</dependency>
 
 	<!-- Mybatis依赖 -->
@@ -81,11 +78,6 @@
 		<groupId>org.mybatis.spring.boot</groupId>
 		<artifactId>mybatis-spring-boot-starter</artifactId>
 		<version>1.3.2</version>
-	</dependency>
-	<dependency>
-		<groupId>com.baomidou</groupId>
-		<artifactId>mybatis-plus-boot-starter</artifactId>
-		<version>${mybatis-plus-boot-starter.version}</version>
 	</dependency>
 
 	<!-- 数据库相关依赖 -->
@@ -99,34 +91,35 @@
 		<artifactId>mssql-jdbc</artifactId>
 		<version>7.2.2.jre8</version>
 	</dependency>
+	<dependency>
+		<groupId>mysql</groupId>
+		<artifactId>mysql-connector-java</artifactId>
+		<version>6.0.6</version>
+	</dependency>
+
+	<!-- Logback 依赖-->
+	<dependency>
+		<groupId>ch.qos.logback</groupId>
+		<artifactId>logback-core</artifactId>
+		<version>${logback.version}</version>
+	</dependency>
+	<dependency>
+		<groupId>ch.qos.logback</groupId>
+		<artifactId>logback-classic</artifactId>
+		<version>${logback.version}</version>
+	</dependency>
 
 	<!-- 其他依赖 -->
 	<dependency>
 		<groupId>org.projectlombok</groupId>
 		<artifactId>lombok</artifactId>
 	</dependency>
-
 </dependencies>
 ```
 
-spring boot 与 mybatis 版本的对应关系：
+### 2.2 配置多数据源
 
-| MyBatis-Spring-Boot-Starter | [MyBatis-Spring](http://www.mybatis.org/spring/index.html#Requirements) | Spring Boot   |
-| --------------------------- | ------------------------------------------------------------ | ------------- |
-| **1.3.x (1.3.1)**           | 1.3 or higher                                                | 1.5 or higher |
-| **1.2.x (1.2.1)**           | 1.3 or higher                                                | 1.4 or higher |
-| **1.1.x (1.1.1)**           | 1.3 or higher                                                | 1.3 or higher |
-| **1.0.x (1.0.2)**           | 1.2 or higher                                                | 1.3 or higher |
-
-## 二、整合 Mybatis 实现动态数据源
-
-### 2.1 配置application.properties和mybatis.properties
-
-Spring Boot 2.x 版本默认采用 Hikari 作为数据库连接池，Hikari 是目前 Java 平台性能最好的连接池，性能好于 druid。
-
-如下是 tomcat server 、 logback 、 DataSource、 mybatis 的相关配置：
-
-application.properties
+**注意**：Spring Boot 2.X 版本不再支持配置继承，多数据源的话每个数据源的所有配置都需要单独配置，否则配置不会生效。
 
 ```properties
 #-----------------------------------------------------------------------------------
@@ -144,73 +137,305 @@ server.tomcat.accesslog.directory=access
 #Below is for Logback Configuration
 logging.config=classpath:logback-config.xml
 logging.level.root=info
-logging.file.name=spring-boot-mybatis-druid-multiple-datasource
+logging.file.name=spring-boot-mybatis-druid-atomikos
 logging.file.path=../logs/app
 
 #-----------------------------------------------------------------------------------
+#Below is about JTA Configuration
+spring.jta.atomikos.properties.log-base-dir=../logs/app
+
+#-----------------------------------------------------------------------------------
 #Below is for DB Configuration
-spring.datasource.driverClassName=com.microsoft.sqlserver.jdbc.SQLServerDriver
-spring.datasource.url=jdbc:sqlserver://182.61.149.71:1433;DatabaseName=pds_demo
-spring.datasource.username=kong
-spring.datasource.password=2020Jan11
+spring.datasource.druid.db1.url=jdbc:mysql://182.61.149.71:3306/pds_demo01?characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false
+spring.datasource.druid.db1.username=kong
+spring.datasource.druid.db1.password=2020Jan11
+spring.datasource.druid.db1.driver-class-name=com.mysql.cj.jdbc.Driver
+# 初始化时建立物理连接的个数。初始化发生在显示调用init方法，或者第一次getConnection时
+spring.datasource.druid.db1.initialSize=5
+# 最小连接池数量
+spring.datasource.druid.db1.minIdle=5
+# 最大连接池数量
+spring.datasource.druid.db1.maxActive=10
+# 获取连接时最大等待时间，单位毫秒。配置了maxWait之后，缺省启用公平锁，并发效率会有所下降，如果需要可以通过配置useUnfairLock属性为true使用非公平锁。
+spring.datasource.druid.db1.maxWait=60000
+# Destroy线程会检测连接的间隔时间，如果连接空闲时间大于等于minEvictableIdleTimeMillis则关闭物理连接。
+spring.datasource.druid.db1.timeBetweenEvictionRunsMillis=60000
+# 连接保持空闲而不被驱逐的最小时间
+spring.datasource.druid.db1.minEvictableIdleTimeMillis=300000
+# 用来检测连接是否有效的sql 因数据库方言而异, 例如 oracle 应该写成 SELECT 1 FROM DUAL
+spring.datasource.druid.db1.validationQuery=SELECT 1
+# 建议配置为true，不影响性能，并且保证安全性。申请连接的时候检测，如果空闲时间大于timeBetweenEvictionRunsMillis，执行validationQuery检测连接是否有效。
+spring.datasource.druid.db1.testWhileIdle=true
+# 申请连接时执行validationQuery检测连接是否有效，做了这个配置会降低性能。
+spring.datasource.druid.db1.testOnBorrow=false
+# 归还连接时执行validationQuery检测连接是否有效，做了这个配置会降低性能。
+spring.datasource.druid.db1.testOnReturn=false
+# 是否自动回收超时连接
+spring.datasource.druid.db1.removeAbandoned=true
+# 超时时间(以秒数为单位)
+spring.datasource.druid.db1.remove-abandoned-timeout=1800
 
-spring.datasource.druid.slave.username=kong
-spring.datasource.druid.slave.password=2020Jan11
-spring.datasource.druid.slave.driverClassName=com.microsoft.sqlserver.jdbc.SQLServerDriver
-spring.datasource.druid.slave.url=jdbc:sqlserver://182.61.149.71:1433;DatabaseName=pds_demo01
+
+spring.datasource.druid.db2.url=jdbc:mysql://182.61.149.71:3306/pds_demo02?characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false
+spring.datasource.druid.db2.username=kong
+spring.datasource.druid.db2.password=2020Jan11
+spring.datasource.druid.db2.driver-class-name=com.mysql.cj.jdbc.Driver
+# 初始化时建立物理连接的个数。初始化发生在显示调用init方法，或者第一次getConnection时
+spring.datasource.druid.db2.initialSize=6
+# 最小连接池数量
+spring.datasource.druid.db2.minIdle=6
+# 最大连接池数量
+spring.datasource.druid.db2.maxActive=10
+# 获取连接时最大等待时间，单位毫秒。配置了maxWait之后，缺省启用公平锁，并发效率会有所下降，如果需要可以通过配置useUnfairLock属性为true使用非公平锁。
+spring.datasource.druid.db2.maxWait=60000
+# Destroy线程会检测连接的间隔时间，如果连接空闲时间大于等于minEvictableIdleTimeMillis则关闭物理连接。
+spring.datasource.druid.db2.timeBetweenEvictionRunsMillis=60000
+# 连接保持空闲而不被驱逐的最小时间
+spring.datasource.druid.db2.minEvictableIdleTimeMillis=300000
+# 用来检测连接是否有效的sql 因数据库方言而异, 例如 oracle 应该写成 SELECT 1 FROM DUAL
+spring.datasource.druid.db2.validationQuery=SELECT 1
+# 建议配置为true，不影响性能，并且保证安全性。申请连接的时候检测，如果空闲时间大于timeBetweenEvictionRunsMillis，执行validationQuery检测连接是否有效。
+spring.datasource.druid.db2.testWhileIdle=true
+# 申请连接时执行validationQuery检测连接是否有效，做了这个配置会降低性能。
+spring.datasource.druid.db2.testOnBorrow=false
+# 归还连接时执行validationQuery检测连接是否有效，做了这个配置会降低性能。
+spring.datasource.druid.db2.testOnReturn=false
+# 是否自动回收超时连接
+spring.datasource.druid.db2.removeAbandoned=true
+# 超时时间(以秒数为单位)
+spring.datasource.druid.db2.remove-abandoned-timeout=1800
+
+#-----------------------------------------------------------------------------------
+#WebStatFilter用于采集web-jdbc关联监控的数据。
+# 是否开启 WebStatFilter 默认是true
+spring.datasource.druid.web-stat-filter.enabled=true
+# 需要拦截的url
+spring.datasource.druid.web-stat-filter.url-pattern=/*
+# 排除静态资源的请求
+spring.datasource.druid.web-stat-filter.exclusions=*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*
+
+#-----------------------------------------------------------------------------------
+# Druid内置提供了一个StatViewServlet用于展示Druid的统计信息。
+# 是否启用StatViewServlet 默认值true
+spring.datasource.druid.stat-view-servlet.enabled=true
+# 需要拦截的url
+spring.datasource.druid.stat-view-servlet.url-pattern=/druid/*
+# 允许清空统计数据
+spring.datasource.druid.stat-view-servlet.reset-enable=true
+spring.datasource.druid.stat-view-servlet.login-username=admin
+spring.datasource.druid.stat-view-servlet.login-password=123456
+
 
 ```
 
-mybatis.properties
+### 2.3 实现多数据源
 
-```properties
-mybatis.mapperLocations = classpath:mybatis/mapper/*.xml
-mybatis.typeAliasesPackage = com.zmz.app.infrastructure.dao.entity
-mybatis.configLocation = classpath:/mybatis/config/mybatis-config.xml
-```
+#### 1.  关闭自动化配置
 
-### 2.2 核心配置文件
-
-注解类： 
-
-```java
-/**
- * 切换数据注解 可以用于类或者方法级别 方法级别优先级 > 类级别
- * @author ASNPHDG
- * @create 2020-01-13 11:36 AM
- */
-@Target({ElementType.METHOD,ElementType.TYPE})
-@Retention(RetentionPolicy.RUNTIME)
-@Documented
-public @interface DataSource {
-
-    DataSourceEnum value() default DataSourceEnum.MASTER;
-}
-```
-
-DataSource枚举：
-
-```java
-public enum DataSourceEnum {
-
-    MASTER("master"),SLAVE("slave");
-
-    private String value;
-
-    DataSourceEnum(String value){this.value=value;}
-
-    public String getValue() {
-        return value;
-    }
-}
-```
-
-AOP类： 
+在启动类关闭 Spring Boot 对数据源的自动化配置，由我们手动进行多数据源的配置：
 
 ```java
 @Slf4j
-@Component
+@ComponentScan(basePackages = {"com.zmz"})
+@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
+public class SpringBootMybatisDruidAtomikosApplication {
+
+    public static void main(String[] args) {
+        log.debug("Application.main.begin");
+        SpringApplication.run(SpringBootMybatisDruidAtomikosApplication.class,args);
+        log.info("Application.main.completed");
+    }
+
+}
+```
+
+#### 2.  手动配置多数据源
+
+创建多数据源配置类 `DataSourceFactory.java`, 手动配置多数据源：
+
++ 这里我们创建 druid 数据源的时候，创建的是 `DruidXADataSource`，它继承自 `DruidDataSource ` 并支持 XA 分布式事务；
++ 使用 `AtomikosDataSourceBean` 包装我们创建的 `DruidXADataSource`，使得数据源能够被 JTA 事务管理器管理；
++ 这里我们使用的 SqlSessionTemplate 是我们重写的 `CustomSqlSessionTemplate`，原生的 SqlSessionTemplate 并不支持在同一个事务中切换数据源。（为了不占用篇幅，我会在后文再给出详细的原因分析）
+
+```java
+@Configuration
+@MapperScan(basePackages = DataSourceFactory.BASE_PACKAGES, sqlSessionTemplateRef = "sqlSessionTemplate")
+public class DataSourceFactory {
+
+    static final String BASE_PACKAGES = "com.zmz.app.infrastructure.dao.mapper";
+    private static final String MAPPER_LOCATION = "classpath:mappers/*.xml";
+
+    /***
+     * 创建 DruidXADataSource 1 用@ConfigurationProperties自动配置属性
+     */
+    @Bean
+    @ConfigurationProperties("spring.datasource.druid.db1")
+    public DataSource druidDataSourceOne() {
+        DataSourceContextHolder.dataSourceIds.add(DataSourceEnum.MASTER.getValue());
+        return new DruidXADataSource();
+    }
+
+    /***
+     * 创建 DruidXADataSource 2
+     */
+    @Bean
+    @ConfigurationProperties("spring.datasource.druid.db2")
+    public DataSource druidDataSourceTwo() {
+        DataSourceContextHolder.dataSourceIds.add(DataSourceEnum.SLAVE.getValue());
+        return new DruidXADataSource();
+    }
+
+    /**
+     * 创建支持XA事务的Atomikos数据源1
+     */
+    @Bean
+    public DataSource dataSourceOne(DataSource druidDataSourceOne) {
+        AtomikosDataSourceBean sourceBean = new AtomikosDataSourceBean();
+        sourceBean.setXaDataSource((DruidXADataSource) druidDataSourceOne);
+        // 必须为数据源指定唯一标识
+        sourceBean.setUniqueResourceName("db1");
+        return sourceBean;
+    }
+
+    /**
+     * 创建支持XA事务的Atomikos数据源2
+     */
+    @Bean
+    public DataSource dataSourceTwo(DataSource druidDataSourceTwo) {
+        AtomikosDataSourceBean sourceBean = new AtomikosDataSourceBean();
+        sourceBean.setXaDataSource((DruidXADataSource) druidDataSourceTwo);
+        sourceBean.setUniqueResourceName("db2");
+        return sourceBean;
+    }
+
+    /**
+     * @param dataSourceOne 数据源1
+     * @return 数据源1的会话工厂
+     */
+    @Bean
+    public SqlSessionFactory sqlSessionFactoryOne(DataSource dataSourceOne) throws Exception {
+        return createSqlSessionFactory(dataSourceOne);
+    }
+
+    /**
+     * @param dataSourceTwo 数据源2
+     * @return 数据源2的会话工厂
+     */
+    @Bean
+    public SqlSessionFactory sqlSessionFactoryTwo(DataSource dataSourceTwo) throws Exception {
+        return createSqlSessionFactory(dataSourceTwo);
+    }
+
+    /***
+     * sqlSessionTemplate与Spring事务管理一起使用，以确保使用的实际SqlSession是与当前Spring事务关联的,
+     * 此外它还管理会话生命周期，包括根据Spring事务配置根据需要关闭，提交或回滚会话
+     * @param sqlSessionFactoryOne 数据源1
+     * @param sqlSessionFactoryTwo 数据源2
+     */
+    @Bean
+    public CustomSqlSessionTemplate sqlSessionTemplate(SqlSessionFactory sqlSessionFactoryOne, SqlSessionFactory sqlSessionFactoryTwo) {
+        Map<Object, SqlSessionFactory> sqlSessionFactoryMap = new HashMap<>();
+        sqlSessionFactoryMap.put(DataSourceEnum.MASTER.getValue(), sqlSessionFactoryOne);
+        sqlSessionFactoryMap.put(DataSourceEnum.SLAVE.getValue(), sqlSessionFactoryTwo);
+        CustomSqlSessionTemplate customSqlSessionTemplate = new CustomSqlSessionTemplate(sqlSessionFactoryOne);
+        customSqlSessionTemplate.setTargetSqlSessionFactories(sqlSessionFactoryMap);
+        return customSqlSessionTemplate;
+    }
+
+    /***
+     * 自定义会话工厂
+     * @param dataSource 数据源
+     * @return :自定义的会话工厂
+     */
+    private SqlSessionFactory createSqlSessionFactory(DataSource dataSource) throws Exception {
+        SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
+        factoryBean.setDataSource(dataSource);
+        factoryBean.setMapperLocations(new PathMatchingResourcePatternResolver().getResources(MAPPER_LOCATION));
+        // 其他可配置项(包括是否打印sql,是否开启驼峰命名等)
+        org.apache.ibatis.session.Configuration configuration = new org.apache.ibatis.session.Configuration();
+        configuration.setMapUnderscoreToCamelCase(true);
+        configuration.setLogImpl(StdOutImpl.class);
+        factoryBean.setConfiguration(configuration);
+
+        // 采用个如下方式配置属性的时候一定要保证已经进行数据源的配置(setDataSource)和数据源和MapperLocation配置(setMapperLocations)
+        // factoryBean.getObject().getConfiguration().setMapUnderscoreToCamelCase(true);
+        // factoryBean.getObject().getConfiguration().setLogImpl(StdOutImpl.class);
+
+        return factoryBean.getObject();
+    }
+}
+
+```
+
+#### 3.  自定义 SqlSessionTemplate
+
+这里主要覆盖重写了 SqlSessionTemplate 的 getSqlSessionFactory，从 ThreadLocal 去获取实际使用的数据源（ AOP 切面会将实际使用的数据源存入 ThreadLocal）。
+
+```java
+/***
+ *  获取当前使用数据源对应的会话工厂
+ */
+@Override
+public SqlSessionFactory getSqlSessionFactory() {
+
+	String dataSourceKey = DataSourceContextHolder.getDataSourceRouterKey();
+	log.info("当前会话工厂 : {}", dataSourceKey);
+	SqlSessionFactory targetSqlSessionFactory = targetSqlSessionFactories.get(dataSourceKey);
+	if (targetSqlSessionFactory != null) {
+		return targetSqlSessionFactory;
+	} else if (defaultTargetSqlSessionFactory != null) {
+		return defaultTargetSqlSessionFactory;
+	} else {
+		Assert.notNull(targetSqlSessionFactories, "Property 'targetSqlSessionFactories' or 'defaultTargetSqlSessionFactory' are required");
+		Assert.notNull(defaultTargetSqlSessionFactory, "Property 'defaultTargetSqlSessionFactory' or 'targetSqlSessionFactories' are required");
+	}
+	return this.sqlSessionFactory;
+}
+
+/**
+ * 这个方法的实现和父类的实现是基本一致的，唯一不同的就是在getSqlSession方法传参中获取会话工厂的方式
+ */
+private class SqlSessionInterceptor implements InvocationHandler {
+	@Override
+	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+		//在getSqlSession传参时候，用我们重写的getSqlSessionFactory获取当前数据源对应的会话工厂
+		final SqlSession sqlSession = getSqlSession(
+				CustomSqlSessionTemplate.this.getSqlSessionFactory(),
+				CustomSqlSessionTemplate.this.executorType,
+				CustomSqlSessionTemplate.this.exceptionTranslator);
+		try {
+			Object result = method.invoke(sqlSession, args);
+			if (!isSqlSessionTransactional(sqlSession, CustomSqlSessionTemplate.this.getSqlSessionFactory())) {
+				sqlSession.commit(true);
+			}
+			return result;
+		} catch (Throwable t) {
+			Throwable unwrapped = unwrapThrowable(t);
+			if (CustomSqlSessionTemplate.this.exceptionTranslator != null && unwrapped instanceof PersistenceException) {
+				Throwable translated = CustomSqlSessionTemplate.this.exceptionTranslator
+						.translateExceptionIfPossible((PersistenceException) unwrapped);
+				if (translated != null) {
+					unwrapped = translated;
+				}
+			}
+			throw unwrapped;
+		} finally {
+			closeSqlSession(sqlSession, CustomSqlSessionTemplate.this.getSqlSessionFactory());
+		}
+	}
+}
+```
+
+#### 4.  AOP 动态切换数据源
+
+使用 AOP 动态切换数据源，将当前使用的数据源名称保存到线程隔离的 ThreadLocal 中 。这里使用注解切换数据源，方法上的注解优先于同类上的注解，如果没有指定，就使用默认的数据源。
+
+使用切面来切换数据源是一种实现思路，而具体如何定义切入点可以按照自己的实际情况来定，这个按照自己的实际使用的方便来实现即可。
+
+```java
+@Slf4j
 @Aspect
+@Component
 @Order(-1900)
 public class DataSourceAspect {
 
@@ -282,26 +507,7 @@ public class DataSourceAspect {
 }
 ```
 
-从数据库的Condition类：
-
-```java
-@Component
-public class MultipleDataSourceCondition implements Condition {
-
-    @Override
-    public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
-        Environment env =context.getEnvironment();
-        String slaveDataSourceUrl = "spring.datasource.druid.slave.url";
-        if(env.getProperty(slaveDataSourceUrl) != null){
-            return true;
-        }
-        return false;
-    }
-
-}
-```
-
-DataSource 上下文类： 
+DataSourceContextHolder 的实现：
 
 ```java
 @Slf4j
@@ -343,399 +549,43 @@ public class DataSourceContextHolder {
     }
 
 }
-```
-
-Druid 配置类：
-
-```java
-@Configuration
-public class DruidConfig {
-
-    @Autowired
-    private Environment env;
-
-    @Bean("master")
-    @Primary
-    public DataSource masterDataSource() throws Exception{
-        Properties properties = getDataSourceProperties("spring.datasource");
-        return DruidDataSourceFactory.createDataSource(properties);
-    }
-
-    @Bean("slave")
-    @Conditional(MultipleDataSourceCondition.class)
-    public DataSource slaveDataSource() throws Exception {
-        Properties properties = getDataSourceProperties("spring.datasource.druid.slave");
-        return DruidDataSourceFactory.createDataSource(properties);
-    }
-
-    @Bean
-    public ServletRegistrationBean servletRegistration() {
-        // 添加初始化参数
-        ServletRegistrationBean servletRegistration = new ServletRegistrationBean(new StatViewServlet());
-        servletRegistration.addUrlMappings("/druid/*");
-        // IP 白名单
-        servletRegistration.addInitParameter("allow", "127.0.0.1");
-        // IP黑名单（当白名单和黑名单中都存在时，拒绝优先于允许。）：如果满足拒绝，则提示：对不起，您不允许查看此页面。
-        servletRegistration.addInitParameter("deny", "192.168.1.73");
-        // 登录可以查看信息的帐户密码。
-        servletRegistration.addInitParameter("loginUsername", "admin");
-        servletRegistration.addInitParameter("loginPassword", "123456");
-        // 定义是否可以重置数据
-        servletRegistration.addInitParameter("resetEnable", "false");
-        return servletRegistration;
-    }
-
-    @Bean
-    public FilterRegistrationBean filterRegistrationBean() {
-        FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean(new WebStatFilter());
-        // 添加过滤规则
-        filterRegistrationBean.addUrlPatterns("/*");
-        // 添加不需要忽略的格式信息。
-        filterRegistrationBean.addInitParameter("exclusions", "*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*");
-        return filterRegistrationBean;
-    }
-
-    private Properties getDataSourceProperties(String prefix) {
-        Properties properties = new Properties();
-        setProperties(properties,"initialSize",prefix+".minIdle");
-        setProperties(properties,"minIdle",prefix+".initialSize");
-        setProperties(properties,"maxActive",prefix+".maxActive");
-        setProperties(properties,"maxWait",prefix+".maxWait");
-        setProperties(properties,"timeBetweenEvictionRunsMillis",prefix+".timeBetweenEvictionRunsMillis");
-        setProperties(properties,"minEvictableIdleTimeMillis",prefix+".minEvictableIdleTimeMillis");
-        setProperties(properties,"validationQuery",prefix+".validationQuery");
-        setProperties(properties,"filters",prefix+".druid.sys.filters");
-        setProperties(properties,"validationQueryTimeout",prefix+".validationQueryTimeout");
-        setProperties(properties,"testWhileIdle",prefix+".testWhileIdle");
-        setProperties(properties,"testOnBorrow",prefix+".testOnBorrow");
-        setProperties(properties,"testOnReturn",prefix+".testOnReturn");
-
-        //如下不做非空判断,是连接数据库必须字段
-        properties.put("driverClassName", env.getProperty(prefix+".driverClassName"));
-        properties.put("url", env.getProperty(prefix+".url"));
-        properties.put("username", env.getProperty(prefix+".username"));
-        properties.put("password", env.getProperty(prefix+".password"));
-        System.out.println("=============================");
-        System.out.println(properties);
-        System.out.println("=============================");
-        return properties;
-    }
-
-    private void setProperties(Properties properties,String key,String envKey){
-        String value = env.getProperty(envKey);
-        if(value!=null){
-            properties.put(key, value);
-        }
-    }
-
-}
 
 ```
 
-Mybatis 配置类：
+#### 5.  JTA 事务管理器配置
 
 ```java
-@Slf4j
 @Configuration
-@PropertySources({ @PropertySource(value = "classpath:mybatis.properties", ignoreResourceNotFound = true, encoding = "UTF-8") })
-@AutoConfigureAfter({DruidConfig.class})
 @EnableTransactionManagement
-public class MybatisConfig {
+public class XATransactionManagerConfig {
 
-    @Value("${mybatis.typeAliasesPackage}")
-    private String typeAliasesPackage;
-
-    @Value("#{'${mybatis.mapperLocations}'.split(',')}")
-    private List<String> mapperLocations;
-
-    @Value("${mybatis.configLocation}")
-    private String configLocation;
-
-    @Autowired
-    @Qualifier(value = "master")
-    DataSource masterDataSource;
-
-    @Autowired(required = false)
-    @Qualifier(value = "slave")
-    DataSource slaveDataSource;
-
-    @Bean(name = "multipleDataSource")
-    public DataSource multipleDataSource() {
-        MultipleDataSource multipleDataSource = new MultipleDataSource();
-        Map< Object, Object > targetDataSources = new HashMap<>();
-        targetDataSources.put(DataSourceEnum.MASTER.getValue(), masterDataSource);
-        // 数据源上下文，用于管理数据源与记录已经注册的数据源key
-        DataSourceContextHolder.dataSourceIds.add(DataSourceEnum.MASTER.getValue());
-        if(slaveDataSource!=null){
-            targetDataSources.put(DataSourceEnum.SLAVE.getValue(), slaveDataSource);
-            DataSourceContextHolder.dataSourceIds.add(DataSourceEnum.SLAVE.getValue());
-        }
-        //添加数据源
-        multipleDataSource.setTargetDataSources(targetDataSources);
-        //设置默认数据源
-        multipleDataSource.setDefaultTargetDataSource(masterDataSource);
-        return multipleDataSource;
-    }
-
-    @Bean(name = "sqlSessionFactory")
-    @Primary
-    public SqlSessionFactory sqlSessionFactory() throws Exception {
-        MybatisSqlSessionFactoryBean sessionFactoryBean = new MybatisSqlSessionFactoryBean();
-        sessionFactoryBean.setDataSource(multipleDataSource());
-
-        // 阅读类型别名包装
-        sessionFactoryBean.setTypeAliasesPackage(typeAliasesPackage);
-
-        // 设置xxxxMapper.xml和Java XxxxMapper.java文件位置的所有映射器位置
-        List<Resource> resourcesList = getAllMappersLocation();
-        if ( null != resourcesList ) {
-            sessionFactoryBean.setMapperLocations( resourcesList.toArray(new Resource[0]) );
-        }
-
-        // 设置mybatis-config.xml配置文件位置
-        log.info("configLocation = " + configLocation);
-        sessionFactoryBean.setConfigLocation(new DefaultResourceLoader().getResource(configLocation));
-
-        // 分页和SQL打印插件
-        Interceptor[] plugins = new Interceptor[]{paginationInterceptor(), sqlPrintInterceptor()};
-        sessionFactoryBean.setPlugins(plugins);
-
-        // 全局配置
-        DbConfig dbConfig = new DbConfig();
-//        dbConfig.setIdType(IdType.AUTO);
-//        dbConfig.setColumnLike(true);
-//        dbConfig.setTablePrefix("t_");
-//        dbConfig.setCapitalMode(false);
-        GlobalConfig globalConfig = new GlobalConfig();
-        globalConfig.setDbConfig(dbConfig);
-        globalConfig.setRefresh(true);
-        // 操作数据库（insert/update）的时候自动填充插件
-        globalConfig.setMetaObjectHandler(new MetaObjectHandlerConfig());
-        sessionFactoryBean.setGlobalConfig(globalConfig);
-        return sessionFactoryBean.getObject();
+    @Bean
+    public UserTransaction userTransaction() throws Throwable {
+        UserTransactionImp userTransactionImp = new UserTransactionImp();
+        userTransactionImp.setTransactionTimeout(10000);
+        return userTransactionImp;
     }
 
     @Bean
-    public SqlSessionTemplate sqlSessionTemplate(SqlSessionFactory sqlSessionFactory) {
-        return new SqlSessionTemplate(sqlSessionFactory);
+    public TransactionManager atomikosTransactionManager() {
+        UserTransactionManager userTransactionManager = new UserTransactionManager();
+        userTransactionManager.setForceShutdown(false);
+        return userTransactionManager;
     }
 
     @Bean
-    public PlatformTransactionManager multipleTransactionManager(@Qualifier("multipleDataSource")DataSource multipleDataSource) {
-        return new DataSourceTransactionManager(multipleDataSource);
-    }
-
-    @Bean
-    public PaginationInterceptor paginationInterceptor() {
-        return new PaginationInterceptor();
-    }
-
-    @Bean
-    public SqlPrintInterceptor sqlPrintInterceptor(){
-        return new SqlPrintInterceptor();
-    }
-
-    public List<Resource> getAllMappersLocation(){
-        log.info("mapperLocations: " + (null == mapperLocations ? "null" : ""+mapperLocations.size()));
-        List<Resource> resourcesList = null;
-        for ( String mapperLocation : mapperLocations) {
-            log.info("mapperLocation:" + mapperLocation);
-            try {
-                Resource[] resources = new PathMatchingResourcePatternResolver().getResources(mapperLocation);
-                if (null != resources && resources.length > 0) {
-                    log.info("resources:" + resources.length);
-                    if (null == resourcesList) {
-                        resourcesList = new ArrayList<>();
-                    }
-                    resourcesList.addAll(Arrays.asList(resources));
-                }
-            } catch (Exception ex) {
-                //Ignore wrong mapperLocation and no-resource location
-                log.debug("WRONG mapperLocation:" + mapperLocation);
-            }
-        }
-        return resourcesList;
-    }
-
-}
-
-```
-
-
-Entity和Vo转换的接口类：
-
-一个entity一般对应数据库的一个表，在转成vo类的时候，某些字段可能会发生变化，例如数据库的男女可能是数字类型，vo对应String类型。
-
-```java
-public interface Translator<T, V> {
-    /**
-     * Translate entity bean to value object
-     * */
-    V E2VO(T entity, V vo);
-    /**
-     * Translate value object to entity
-     * */
-    T VO2E(T entity, V vo);
-
-    default List<V> E2VOs(List<T> entities, List<V> vos){
-        if (entities == null || entities.size() == 0) {
-            return null;
-        }
-        List<V> result = new ArrayList<>();
-        for (int iLoop = 0; iLoop < entities.size(); iLoop++) {
-            V vo = null;
-            if (vos != null && vos.size() >= iLoop) {
-                vo = vos.get(iLoop);
-            }
-            T entity = entities.get(iLoop);
-            result.add(E2VO(entity, vo));
-        }
-        return result;
-    }
-
-    default List<T> VO2Es(List<T> entities, List<V> vos){
-        if(vos == null || vos.size()==0){
-            return null;
-        }
-        List<T> result = new ArrayList<>();
-        for(int iLoop=0; iLoop<vos.size(); iLoop++){
-            T entity = null;
-            if(entities != null && entities.size()>=iLoop){
-                entity = entities.get(iLoop);
-            }
-            V vo = vos.get(iLoop);
-            result.add(VO2E(entity, vo));
-        }
-        return result;
+    public PlatformTransactionManager transactionManager(UserTransaction userTransaction,TransactionManager transactionManager) {
+        return new JtaTransactionManager(userTransaction, transactionManager);
     }
 }
 ```
 
 
-### 2.3 单元测试
 
-新建 UserMapper.java 和 UserMapper.xml，及其测试类：
+## 三、测试整合结果
 
-```java
-@Mapper
-public interface UserMapper {
-    UserEntity selectByPrimaryKey(Long id);
-    List<UserEntity> queryAllUser();
-    void insert(UserEntity user);
-    void deleteById(Long id);
-    void updateByPrimaryKeySelective(UserEntity user);
-}
-```
 
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.zmz.app.infrastructure.dao.mapper.UserMapper">
-
-    <resultMap id="BaseResultMap" type="com.zmz.app.infrastructure.dao.entity.UserEntity">
-        <id column="id" jdbcType="BIGINT" property="id" />
-        <result column="name" jdbcType="VARCHAR" property="name" />
-        <result column="dept" jdbcType="VARCHAR" property="dept" />
-        <result column="phone" jdbcType="VARCHAR" property="phone" />
-        <result column="website" jdbcType="VARCHAR" property="website" />
-    </resultMap>
-
-    <sql id="Base_Column_List">
-        id, name, dept, phone, website
-    </sql>
-
-    <insert id="insert" parameterType="com.zmz.app.infrastructure.dao.entity.UserEntity">
-        insert into tbl_user ( name, dept,
-        phone, website)
-        values (#{name,jdbcType=VARCHAR}, #{dept,jdbcType=VARCHAR},
-        #{phone,jdbcType=VARCHAR}, #{website,jdbcType=VARCHAR})
-    </insert>
-
-    <delete id="deleteById" parameterType="java.lang.Long">
-        delete from tbl_user where id = #{id,jdbcType=BIGINT}
-    </delete>
-
-    <update id="updateByPrimaryKeySelective" parameterType="com.zmz.app.infrastructure.dao.entity.UserEntity">
-        update tbl_user
-        <set>
-            <if test="name != null">
-                name = #{name,jdbcType=VARCHAR},
-            </if>
-            <if test="dept != null">
-                dept = #{dept,jdbcType=VARCHAR},
-            </if>
-            <if test="phone != null">
-                phone = #{phone,jdbcType=VARCHAR},
-            </if>
-            <if test="website != null">
-                website = #{website,jdbcType=VARCHAR},
-            </if>
-        </set>
-        where id = #{id,jdbcType=BIGINT}
-    </update>
-
-    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
-        select
-        <include refid="Base_Column_List" />
-        from tbl_user
-        where id = #{id,jdbcType=BIGINT}
-    </select>
-
-    <select id="queryAllUser" resultMap="BaseResultMap">
-        select
-        <include refid="Base_Column_List" />
-        from tbl_user
-    </select>
-
-</mapper>
-```
-
-新建 Repository 类，如下是使用数据源slave1的UserRepository01的实现类UserRepository01Impl：
-
-```java
-@Repository
-@DataSource("slave1")
-public class UserRepository01Impl implements UserRepository01 {
-
-    @Resource
-    private UserMapper userMapper;
-    @Autowired
-    private UserTranslator userTranslator;
-
-    @Override
-    public UserModel queryById(long id) {
-        UserEntity userEntity = userMapper.selectByPrimaryKey(id);
-        return userTranslator.E2VO(userEntity,null);
-    }
-
-    @Override
-    public List<UserModel> queryAllUser() {
-        List<UserEntity> entityList = userMapper.queryAllUser();
-        return userTranslator.E2VOs(entityList,null);
-    }
-
-    @Override
-    public void create(UserModel userModel) {
-        UserEntity userEntity = userTranslator.VO2E(null,userModel);
-        userMapper.insert(userEntity);
-    }
-
-    @Override
-    public void delete(long id) {
-        userMapper.deleteById(id);
-    }
-
-    @Override
-    public void updateUser(UserModel userModel) {
-        UserEntity userEntity = userTranslator.VO2E(null,userModel);
-        userMapper.updateByPrimaryKeySelective(userEntity);
-    }
-
-}
-
-```
-
-测试类：
+### 3.1 单元测试分布式事务和常规查询
 
 ```java
 @Slf4j
@@ -748,6 +598,9 @@ public class MultipleDataSourceTest {
     @Autowired
     private UserRepository01 userRepository01;
 
+    /**
+     * 没有@Transactional的情况下测试两个数据库查数据
+     */
     @Test
     public void test_query(){
         System.out.println("=======================================");
@@ -771,10 +624,12 @@ public class MultipleDataSourceTest {
         }else{
             System.out.println("从数据源01 没有查询到数据。");
         }
-
     }
 
-    @Test
+    /**
+     * 测试没有@Transactional的情况
+     */
+//    @Test
     public void test_create(){
         System.out.println("=======================================");
         System.out.println("主数据源-测试创建功能 ......");
@@ -788,14 +643,270 @@ public class MultipleDataSourceTest {
 
     }
 
+    /**
+     * 测试分布式事务
+     *
+     * userRepository.updateUser()添加了事务的注解，在userRepository01.updateUser()之前执行，
+     * 当userRepository01.updateUser()报错，userRepository.updateUser()正常的话，userRepository.updateUser()应该是提交事务
+     *
+     * userRepository01.updateUser()添加了事务的注解，当报错的时候，应该进行事务回滚，即不Update数据库
+     */
+//    @Test
+    public void test_update(){
+        System.out.println("=======================================");
+        System.out.println("主数据源-测试 Update ......");
+        List<UserModel> list = userRepository.queryAllUser();
+        if(list!=null){
+            UserModel userModel = list.get(0);
+            System.out.println("将要更新User信息："+userModel);
+            userModel.setName("tx-s-master-xiaoming");
+            userRepository.updateUser(userModel);
+        }else{
+            System.out.println("主数据源 没有查询到数据。");
+        }
+
+        System.out.println("=======================================");
+        System.out.println("从数据源01-测试 Update ......");
+        List<UserModel> list01 = userRepository01.queryAllUser();
+        if(list01!=null){
+            UserModel userModel = list01.get(0);
+            System.out.println("将要更新User信息："+userModel);
+            userModel.setName("tx-f-slave1-xiaoming");
+            userRepository01.updateUser(userModel);
+        }else{
+            System.out.println("从数据源01 没有查询到数据。");
+        }
+    }
 }
 
 ```
 
+### 3.2 测试 Druid 数据源
 
-### 2.4 其他参考
+访问 `http://localhost:10190/app/druid/index.html`  ，可以在数据源监控页面看到两个数据源已配置成功，同时参数也与我们在 yml 中配置的完全一致。
 
-mybatis 配置更多说明可以参考settings  http://www.mybatis.org/mybatis-3/zh/configuration.html
+<div align="center"> <img src="https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/images/spring-boot-mybatis-druid-atomikos/druid-mysql.png"/> </div>
 
-spring boot 2.0 默认采用Hikari 作为连接池 Hikari github地址 https://github.com/brettwooldridge/HikariCP
+url 监控情况：
+
+<div align="center"> <img src="https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/images/spring-boot-mybatis-druid-atomikos/durid-mysql-weburl.png"/> </div>
+
+
+## 四、JTA与两阶段提交
+
+解释一下本用例中涉及到的相关概念。
+
+### 4.1 XA 与 JTA
+
+XA 是由 X/Open 组织提出的分布式事务的规范。XA 规范主要定义了 (全局) 事务管理器 (Transaction Manager) 和 (局部) 资源管理器 (Resource Manager) 之间的接口。XA 接口是双向的系统接口，在事务管理器（Transaction Manager）以及一个或多个资源管理器（Resource Manager）之间形成通信桥梁。XA 之所以需要引入事务管理器是因为，在分布式系统中，从理论上讲，两台机器理论上无 法达到一致的状态，需要引入一个单点进行协调。
+事务管理器控制着全局事务，管理事务生命周期，并协调资源。资源管理器负责控制和管理实际资源（如数据库或 JMS 队列）。
+下图说明了事务管理器、资源管理器，与应用程序之间的关系。
+
+**而 JTA 就是 XA 规范在 java 语言上的实现。JTA 采用两阶段提交实现分布式事务。**
+
+<div align="center"> <img src="https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/images/spring-boot-mybatis-druid-atomikos/XA.gif"/> </div>
+
+### 4.2 两阶段提交
+
+分布式事务必须满足传统事务的特性，即原子性，一致性，分离性和持久性。但是分布式事务处理过程中，某些节点 (Server) 可能发生故障，或 者由于网络发生故障而无法访问到某些节点。为了防止分布式系统部分失败时产生数据的不一致性。在分布式事务的控制中采用了两阶段提交协议（Two- Phase Commit Protocol）。即事务的提交分为两个阶段：
+
++ 预提交阶段 (Pre-Commit Phase)
++ 决策后阶段（Post-Decision Phase）
+
+两阶段提交用来协调参与一个更新中的多个服务器的活动，以防止分布式系统部分失败时产生数据的不一致性。例如，如果一个更新操作要求位于三个不同结点上的记录被改变，且其中只要有一个结点失败，另外两个结点必须检测到这个失败并取消它们所做的改变。为了支持两阶段提交，一个分布式更新事务中涉及到的服务器必须能够相互通信。一般来说一个服务器会被指定为"控制"或"提交"服务器并监控来自其它服务器的信息。
+
+在分布式更新期间，各服务器首先标志它们已经完成（但未提交）指定给它们的分布式事务的那一部分，并准备提交（以使它们的更新部分成为永久性的）。这是   两阶段提交的第一阶段。如果有一结点不能响应，那么控制服务器要指示其它结点撤消分布式事务的各个部分的影响。如果所有结点都回答准备好提交，控制服务器则指示它们提交并等待它们的响应。等待确认信息阶段是第二阶段。在接收到可以提交指示后，每个服务器提交分布式事务中属于自己的那一部分，并给控制服务器 发回提交完成信息。
+
+在一个分布式事务中，必须有一个场地的 Server 作为协调者 (coordinator)，它能向  其它场地的 Server 发出请求，并对它们的回答作出响应，由它来控制一个分布式事务的提交或撤消。该分布式事务中涉及到的其它场地的 Server 称为参与者 (Participant)。
+
+<div align="center"> <img src="https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/images/spring-boot-mybatis-druid-atomikos/commit.png"/> </div>
+
+事务两阶段提交的过程如下：
+
+**第一阶段**：
+
+两阶段提交在应用程序向协调者发出一个提交命令时被启动。这时提交进入第一阶段，即预提交阶段。在这一阶段中：
+
+​	(1) 协调者准备局部（即在本地）提交并在日志中写入"预提交"日志项，并包含有该事务的所有参与者的名字。
+
+​	(2)  协调者询问参与者能否提交该事务。一个参与者可能由于多种原因不能提交。例如，该 Server 提供的约束条 (Constraints) 的延迟检查不符合   限制条件时，不能提交；参与者本身的 Server 进程或硬件发生故障，不能提交；或者协调者访问不到某参与者（网络故障），这时协调者都认为是收到了一个  否定的回答。
+
+​	(3) 如果参与者能够提交，则在其本身的日志中写入"准备提交"日志项，该日志项立即写入硬盘，然后给协调者发回，已准备好提交"的回答。
+
+​	(4) 协调者等待所有参与者的回答，如果有参与者发回否定的回答，则协调者撤消该事务并给所有参与者发出一个"撤消该事务"的消息，结束该分布式事务，撤消该事务的所有影响。
+
+**第二阶段**：
+
+ 如果所有的参与者都送回"已准备好提交"的消息，则该事务的提交进入第二阶段，即决策后提交阶段。在这一阶段中：
+
+​	(1) 协调者在日志中写入"提交"日志项，并立即写入硬盘。
+
+​	(2) 协调者向参与者发出"提交该事务"的命令。各参与者接到该命令后，在各自的日志中写入"提交"日志项，并立即写入硬盘。然后送回"已提交"的消息，释放该事务占用的资源。 
+
+​	(3) 当所有的参与者都送回"已提交"的消息后，协调者在日志中写入"事务提交完成"日志项，释放协调者占用的资源 。这样，完成了该分布式事务的提交。
+
+<br>
+
+本小结的表述引用自博客：[浅谈分布式事务](https://www.cnblogs.com/baiwa/p/5328722.html)
+
+
+
+## 五、常见整合异常
+
+### 5.1 事务下多数据源无法切换
+
+这里是主要是对上文提到为什么不重写 SqlSessionTemplate 会导致在事务下数据源切换失败的补充，我们先看看 sqlSessionTemplate 源码中关于该类的定义：
+
+> sqlSessionTemplate 与 Spring 事务管理一起使用，以确保使用的实际 SqlSession 是与当前 Spring 事务关联的,此外它还管理会话生命周期，包括根据 Spring 事务配置根据需要关闭，提交或回滚会话。
+
+
+<div align="center"> <img src="https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/images/spring-boot-mybatis-druid-atomikos/sqlSessionTemplate.png"/> </div>
+
+
+这里最主要的是说明 SqlSession 是与当前是 Spring 事务是关联的。
+
+#### 1. SqlSession与事务关联导致问题
+
+对于 Mybatis 来说，是默认开启一级缓存的，一级缓存是 Session 级别的，对于同一个 Session 如果是相同的查询语句并且查询参数都相同，第二次的查询就直接从一级缓存中获取。
+
+这也就是说，对于如下的情况，由于 SqlSession 是与事务绑定的，如果使用原生 SqlSessionTemplate，则第一次查询和第二次查询都是用的同一个 SqlSession，那么第二个查询 数据库2 的查询语句根本不会执行，会直接从一级缓存中获取查询结果。两次查询得到都是第一次查询的结果。
+
+```java
+@Override
+@Transactional
+public List<UserModel> queryAllUser() {
+	List<UserEntity> entityList = userMapper.queryAllUser();
+	return userTranslator.E2VOs(entityList,null);
+}
+```
+
+
+
+#### 2. 连接的复用导致无法切换数据源
+
+先说一下为什么会出现连接的复用：
+
+我们可以在 Spring 的源码中看到 Spring 在通过 `DataSourceUtils` 类中去获取新的连接 `doGetConnection` 的时候，会通过 `TransactionSynchronizationManager.getResource(dataSource)` 方法去判断当前数据源是否有可用的连接，如果有就直接返回，如果没有就通过 `fetchConnection` 方法去获取。
+
+```java
+public static Connection doGetConnection(DataSource dataSource) throws SQLException {
+   Assert.notNull(dataSource, "No DataSource specified");
+	// 判断是否有可用的连接
+   ConnectionHolder conHolder = (ConnectionHolder) TransactionSynchronizationManager.getResource(dataSource);
+   if (conHolder != null && (conHolder.hasConnection() || conHolder.isSynchronizedWithTransaction())) {
+      conHolder.requested();
+      if (!conHolder.hasConnection()) {
+         logger.debug("Fetching resumed JDBC Connection from DataSource");
+         conHolder.setConnection(fetchConnection(dataSource));
+      }
+       //如果有可用的连接就直接方法
+      return conHolder.getConnection();
+   }
+   // Else we either got no holder or an empty thread-bound holder here.
+
+   logger.debug("Fetching JDBC Connection from DataSource");
+    // 如果没有可用的连接就直接返回
+   Connection con = fetchConnection(dataSource);
+
+   if (TransactionSynchronizationManager.isSynchronizationActive()) {
+      try {
+         // Use same Connection for further JDBC actions within the transaction.
+         // Thread-bound object will get removed by synchronization at transaction completion.
+         ConnectionHolder holderToUse = conHolder;
+         if (holderToUse == null) {
+            holderToUse = new ConnectionHolder(con);
+         }
+         else {
+            holderToUse.setConnection(con);
+         }
+         holderToUse.requested();
+         TransactionSynchronizationManager.registerSynchronization(
+               new ConnectionSynchronization(holderToUse, dataSource));
+         holderToUse.setSynchronizedWithTransaction(true);
+         if (holderToUse != conHolder) {
+            TransactionSynchronizationManager.bindResource(dataSource, holderToUse);
+         }
+      }
+      catch (RuntimeException ex) {
+         // Unexpected exception from external delegation call -> close Connection and rethrow.
+         releaseConnection(con, dataSource);
+         throw ex;
+      }
+   }
+
+   return con;
+}
+```
+
+这里主要的问题是 `TransactionSynchronizationManager.getResource(dataSource)` 中 dataSource 参数是在哪里进行注入的，这里可以沿着调用堆栈往上寻找，可以看到是在这个参数是 `SpringManagedTransaction` 类中获取连接的时候传入的。
+
+<div align="center"> <img src="https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/images/spring-boot-mybatis-druid-atomikos/opneConnection.png"/> </div>
+
+
+而 `SpringManagedTransaction` 这类中的 dataSource 是如何得到赋值的，这里可以进入这个类中查看，只有在创建这个类的时候通过构造器为 dataSource 赋值，那么是哪个方法创建了 `SpringManagedTransaction`?
+
+<div align="center"> <img src="https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/images/spring-boot-mybatis-druid-atomikos/springManagerTransaction.png"/> </div>
+
+
+在构造器上打一个断点，沿着调用的堆栈往上寻找可以看到是 `DefaultSqlSessionFactory` 在创建 `SpringManagedTransaction` 中传入的，**这个数据源就是创建 sqlSession 的 `sqlSessionFactory` 中数据源**。
+
+<div align="center"> <img src="https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/images/spring-boot-mybatis-druid-atomikos/DefaultSqlSessionFactory.png"/> </div>
+
+
+**这里说明连接的复用是与我们创建 SqlSession 时候传入的 SqlSessionFactory 是否是同一个有关**。
+
+
+<div align="center"> <img src="https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/images/spring-boot-mybatis-druid-atomikos/getsqlSession.png"/> </div>
+
+
+所以我们才重写了 SqlSessionTemplate 中的 `getSqlSession` 方法，获取 SqlSession 时候传入正在使用的数据源对应的 `SqlSessionFactory`，这样即便在同一个的事务中，由于传入的 `SqlSessionFactory` 中不同，就不会出现连接复用。
+
+
+<div align="center"> <img src="https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/images/spring-boot-mybatis-druid-atomikos/customSqlSessionTemplate.png"/> </div>
+
+
+关于 Mybati-Spring 的更多事务处理机制，推荐阅读博客：[mybatis-spring 事务处理机制分析](https://my.oschina.net/fifadxj/blog/785621)
+
+
+
+### 5.2  出现org.apache.ibatis.binding.BindingExceptionInvalid bound statement (not found)异常
+
+出现这个异常的的原因是在创建 SqlSessionFactory 的时候，在 `setMapperLocations` 配置好之前调用了 `factoryBean.getObject()` 方法
+
+```java
+//一个错误的示范
+private SqlSessionFactory createSqlSessionFactory(DataSource dataSource) throws Exception {
+        SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
+        factoryBean.setDataSource(dataSource);
+        // factoryBean.getObject()
+        factoryBean.getObject().getConfiguration().setMapUnderscoreToCamelCase(true);
+        factoryBean.getObject().getConfiguration().setLogImpl(StdOutImpl.class);
+        factoryBean.setMapperLocations(new PathMatchingResourcePatternResolver().getResources(MAPPER_LOCATION));
+        return factoryBean.getObject();
+    }
+```
+
+上面这段代码没有任何编译问题，导致这个错误不容易发现，但是在调用 SQL 时候就会出现异常。原因是 `factoryBean.getObject()` 方法被调用时就已经创建了 SqlSessionFactory，并且 SqlSessionFactory 只会被创建一次。此时还没有指定 SQL 文件的位置，导致 Mybatis 无法将接口与 XML 中的 SQL 语句进行绑定，所以出现 BindingExceptionInvalid 绑定异常。
+
+```java
+@Override
+  public SqlSessionFactory getObject() throws Exception {
+    if (this.sqlSessionFactory == null) {
+      afterPropertiesSet();
+    }
+
+    return this.sqlSessionFactory;
+  }
+```
+
+正常绑定的情况下，我们是可以在 SqlSessionFactory 中查看到绑定好的查询接口：
+
+<div align="center"> <img src="https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/images/spring-boot-mybatis-druid-atomikos/sqlSessionFactory.png"/> </div>
+<br>
+
+## 参考资料
+
++ [浅谈分布式事务](https://www.cnblogs.com/baiwa/p/5328722.html)
+
++ [AtomikosProperties Javadoc](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/api/org/springframework/boot/jta/atomikos/AtomikosProperties.html)
 
