@@ -24,6 +24,8 @@ target/
 .svn/
 tmp/
 *.iml
+*.lck
+
 
 .metadata
 .classpath
