@@ -20,31 +20,33 @@ import java.lang.reflect.Method;
 @Slf4j
 @Component
 @Aspect
-@Order(-1)
+@Order(-1900)
 public class DataSourceAspect {
 
     protected static final ThreadLocal<String> preDatasourceHolder = new ThreadLocal<>();
-
-
 
     @Pointcut(value = "@within(com.zmz.core.config.datasource.annotation.DataSource) || @annotation(com.zmz.core.config.datasource.annotation.DataSource)")
     protected void datasourceAspect() {
     }
 
     @Before("datasourceAspect()")
-    public void changeDataSourceBeforeMethodExecution(JoinPoint jp) {
-        String key = determineDatasource(jp);
-
-        if (key == null) {
-            DataSourceContextHolder.setDataSource(null);
-            return;
+    public void changeDataSource(JoinPoint point) {
+        String key = determineDatasource(point);
+        if (DataSourceContextHolder.dataSourceIds.contains(key)) {
+            preDatasourceHolder.set(DataSourceContextHolder.getDataSourceRouterKey());
+            DataSourceContextHolder.setDataSourceRouterKey(key);
+        } else {
+            log.info("数据源[{}]不存在，使用默认数据源 >{}", key, point.getSignature());
         }
-        preDatasourceHolder.set(DataSourceContextHolder.getDataSource());
-        DataSourceContextHolder.setDataSource(key);
-
     }
 
-    public String determineDatasource(JoinPoint jp) {
+    @After("datasourceAspect()")
+    public void restoreDataSourceAfterMethodExecution() {
+        DataSourceContextHolder.setDataSourceRouterKey(preDatasourceHolder.get());
+        preDatasourceHolder.remove();
+    }
+
+    private String determineDatasource(JoinPoint jp) {
         String methodName = jp.getSignature().getName();
         Class targetClass = jp.getSignature().getDeclaringType();
         String dataSourceForTargetClass = resolveDataSourceFromClass(targetClass);
@@ -54,13 +56,24 @@ public class DataSourceAspect {
         log.info("AOP 切换 Key 为：{}",resultDS);
         return resultDS;
     }
-
-    @After("datasourceAspect()")
-    public void restoreDataSourceAfterMethodExecution() {
-        DataSourceContextHolder.setDataSource(preDatasourceHolder.get());
-        preDatasourceHolder.remove();
+    private String resolveDataSourceFromMethod(Class targetClass, String methodName) {
+        Method m = findUniqueMethod(targetClass, methodName);
+        if (m != null) {
+            DataSource choDs = m.getAnnotation(DataSource.class);
+            return resolveDataSourceName(choDs);
+        }
+        return null;
     }
-
+    private String determinateDataSource(String classDS, String methodDS) {
+        return methodDS == null ? classDS : methodDS;
+    }
+    private String resolveDataSourceFromClass(Class targetClass) {
+        DataSource classAnnotation = (DataSource) targetClass.getAnnotation(DataSource.class);
+        return null != classAnnotation ? resolveDataSourceName(classAnnotation) : null;
+    }
+    private String resolveDataSourceName(DataSource ds) {
+        return ds == null ? null : ds.value().getValue();
+    }
     private static Method findUniqueMethod(Class<?> clazz, String name) {
         Class<?> searchType = clazz;
         while (searchType != null) {
@@ -74,25 +87,5 @@ public class DataSourceAspect {
         }
         return null;
     }
-    private String resolveDataSourceFromMethod(Class targetClass, String methodName) {
-        Method m = findUniqueMethod(targetClass, methodName);
-        if (m != null) {
-            DataSource choDs = m.getAnnotation(DataSource.class);
-            return resolveDataSourceName(choDs);
-        }
-        return null;
-    }
 
-    private String determinateDataSource(String classDS, String methodDS) {
-        return methodDS == null ? classDS : methodDS;
-    }
-
-    private String resolveDataSourceFromClass(Class targetClass) {
-        DataSource classAnnotation = (DataSource) targetClass.getAnnotation(DataSource.class);
-        return null != classAnnotation ? resolveDataSourceName(classAnnotation) : null;
-    }
-
-    private String resolveDataSourceName(DataSource ds) {
-        return ds == null ? null : ds.value().getValue();
-    }
 }

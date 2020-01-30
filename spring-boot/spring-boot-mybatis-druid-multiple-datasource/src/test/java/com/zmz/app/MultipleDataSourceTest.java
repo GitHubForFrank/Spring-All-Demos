@@ -1,4 +1,4 @@
-package com.zmz.app.application.service.impl;
+package com.zmz.app;
 
 import com.zmz.app.domain.model.UserModel;
 import com.zmz.app.domain.repository.UserRepository;

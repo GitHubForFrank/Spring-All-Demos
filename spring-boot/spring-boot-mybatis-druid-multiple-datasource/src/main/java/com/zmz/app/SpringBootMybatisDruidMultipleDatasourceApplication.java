@@ -1,11 +1,9 @@
 package com.zmz.app;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.Banner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 /**
  * @author : ASNPHDG
@@ -14,14 +12,11 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @Slf4j
 @ComponentScan(basePackages = {"com.zmz"})
 @SpringBootApplication
-@EnableTransactionManagement
-public class Application {
+public class SpringBootMybatisDruidMultipleDatasourceApplication {
 
     public static void main(String[] args) {
         log.debug("Application.main.begin");
-        SpringApplication app = new SpringApplication(Application.class);
-        app.setBannerMode(Banner.Mode.OFF);
-        app.run(args);
+        SpringApplication.run(SpringBootMybatisDruidMultipleDatasourceApplication.class,args);
         log.info("Application.main.completed");
     }
 
