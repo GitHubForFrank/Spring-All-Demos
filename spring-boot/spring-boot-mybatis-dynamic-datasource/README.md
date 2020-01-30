@@ -1,10 +1,11 @@
-# Spring Boot 整合 Mybatis 实现动态数据源
+# Spring-boot 整合 mybatis 实现动态数据源
 
 
 <nav>
 <a href="#一项目说明">一、项目说明</a><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#11-项目结构">1.1 项目结构</a><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#12-主要依赖">1.2 主要依赖</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#13-HikariDataSources和DruidDataSource切换">1.3 HikariDataSources和DruidDataSource切换</a><br/>
 <a href="#二整合-Mybatis 实现动态数据源">二、整合 Mybatis 实现动态数据源</a><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#21-配置applicationproperties">2.1 配置application.properties</a><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#22-核心配置文件">2.2 核心配置文件</a><br/>
@@ -91,6 +92,37 @@ spring boot 与 mybatis 版本的对应关系：
 | **1.2.x (1.2.1)**           | 1.3 or higher                                                | 1.4 or higher |
 | **1.1.x (1.1.1)**           | 1.3 or higher                                                | 1.3 or higher |
 | **1.0.x (1.0.2)**           | 1.2 or higher                                                | 1.3 or higher |
+
+### 1.3 HikariDataSources和DruidDataSource切换
+
+在动态数据源注册类DynamicDataSourceRegister中有个方法是判断数据源类型的，如果没有配置默认是 HikariDataSource，想使用DruidDataSource作为默认值的可以在这个地方稍作修改即可。
+
+```java
+    /**
+     * 通过字符串获取数据源class对象
+     *
+     * @param typeStr
+     * @return
+     */
+    private Class<? extends DataSource> getDataSourceType(String typeStr) {
+        Class<? extends DataSource> type;
+        try {
+            if (StringUtils.hasLength(typeStr)) {
+                // 字符串不为空则通过反射获取class对象
+                type = (Class<? extends DataSource>) Class.forName(typeStr);
+            } else {
+                // 默认为hikariCP数据源，与springboot默认数据源保持一致
+                type = HikariDataSource.class;
+            }
+            return type;
+        } catch (Exception e) {
+            //无法通过反射获取class对象的情况则抛出异常，该情况一般是写错了，所以此次抛出一个runtimeexception
+            throw new IllegalArgumentException("can not resolve class with type: " + typeStr);
+        }
+    }
+```
+
+
 
 ## 二、整合 Mybatis 实现动态数据源
 
