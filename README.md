@@ -9,11 +9,11 @@
 
 - 项目涉及表的建表语句放置在 https://github.com/GitHubForFrank/Spring-All-Demos/tree/master/00-materials/database-scripts 文件夹下；
 
-- 项目中目前用到的数据库有SqlServer和MySql，本人在百度云服务器已经创建的对应数据库，已经做了内网穿透，公网即可访问。至于百度云服务器到期日待定。如果想要创建表，希望自己本地搭建数据库，次数共享具有对数据的CRUD权限的账号密码：
+- 项目中目前用到的数据库有SqlServer和MySql，本人在百度云服务器已经创建的对应数据库，已经做了内网穿透，公网即可访问。至于百度云服务器到期日待定。如果想要创建表，希望自己本地搭建数据库，此处共享具有对表数据的CRUD权限的账号密码：
 
-&nbsp;&nbsp;账号：kong
-
-&nbsp;&nbsp;密码：2020Jan11
+&nbsp;&nbsp;&nbsp;&nbsp;服务器地址：182.61.149.71<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;用户名：kong<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;密码：2020Jan11
 
 
 **版本说明**：
