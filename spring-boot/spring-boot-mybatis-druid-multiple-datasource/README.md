@@ -18,7 +18,7 @@
 
 - 项目涉及表的建表语句放置在 https://github.com/GitHubForFrank/Spring-All-Demos/tree/master/00-materials/database-scripts 下；
 
-- 本项目中创建了2个不同的repository分别对应2个不同的SqlServer数据源，是本人在百度云服务器创建的数据库，已经做了内网穿透，公网即可访问。至于百度云服务器到期日待定。2个repository共用一个Mapper文件（即三个数据库中创建了相同结构的表）：
+- 本项目中创建了2个不同的repository分别对应2个不同的SqlServer数据源，是本人在百度云服务器创建的数据库，已经做了内网穿透，公网即可访问。至于百度云服务器到期日待定。2个repository共用一个Mapper文件（即2个数据库中创建了相同结构的表）：
 
 <div align="center"> <img src="https://github.com/GitHubForFrank/spring-all-demos/blob/master/00-materials/images/spring-boot-mybatis-druid-multiple-datasource/project-structure.png"/> </div>
 
