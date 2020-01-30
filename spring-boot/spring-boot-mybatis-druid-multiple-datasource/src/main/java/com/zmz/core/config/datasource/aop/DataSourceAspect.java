@@ -25,19 +25,7 @@ public class DataSourceAspect {
 
     protected static final ThreadLocal<String> preDatasourceHolder = new ThreadLocal<>();
 
-    private static Method findUniqueMethod(Class<?> clazz, String name) {
-        Class<?> searchType = clazz;
-        while (searchType != null) {
-            Method[] methods = (searchType.isInterface() ? searchType.getMethods() : searchType.getDeclaredMethods());
-            for (Method method : methods) {
-                if (name.equals(method.getName())) {
-                    return method;
-                }
-            }
-            searchType = searchType.getSuperclass();
-        }
-        return null;
-    }
+
 
     @Pointcut(value = "@within(com.zmz.core.config.datasource.annotation.DataSource) || @annotation(com.zmz.core.config.datasource.annotation.DataSource)")
     protected void datasourceAspect() {
@@ -73,6 +61,19 @@ public class DataSourceAspect {
         preDatasourceHolder.remove();
     }
 
+    private static Method findUniqueMethod(Class<?> clazz, String name) {
+        Class<?> searchType = clazz;
+        while (searchType != null) {
+            Method[] methods = (searchType.isInterface() ? searchType.getMethods() : searchType.getDeclaredMethods());
+            for (Method method : methods) {
+                if (name.equals(method.getName())) {
+                    return method;
+                }
+            }
+            searchType = searchType.getSuperclass();
+        }
+        return null;
+    }
     private String resolveDataSourceFromMethod(Class targetClass, String methodName) {
         Method m = findUniqueMethod(targetClass, methodName);
         if (m != null) {

@@ -1,4 +1,4 @@
-package com.zmz.app.infrastructure.repository.sqlserver;
+package com.zmz.app.infrastructure.repository.impl;
 
 
 import com.zmz.app.domain.model.UserModel;
