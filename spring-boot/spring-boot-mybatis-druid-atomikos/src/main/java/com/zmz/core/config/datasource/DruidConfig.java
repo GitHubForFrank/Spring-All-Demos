@@ -42,17 +42,17 @@ public class DruidConfig {
 
     @Bean
     public ServletRegistrationBean servletRegistration() {
-        //Add initialization parameter:initParams
+        // 添加初始化参数
         ServletRegistrationBean servletRegistration = new ServletRegistrationBean(new StatViewServlet());
         servletRegistration.addUrlMappings("/druid/*");
-        //White list
+        // IP 白名单
         servletRegistration.addInitParameter("allow", "127.0.0.1");
-        //IP black list(When exist in both white list and black list, deny takes precedence over allow. ) : If deny is satisfied, prompt:Sorry, you are not permitted to view this page.
+        // IP黑名单（当白名单和黑名单中都存在时，拒绝优先于允许。）：如果满足拒绝，则提示：对不起，您不允许查看此页面。
         servletRegistration.addInitParameter("deny", "192.168.1.73");
-        //Login to check the account password of the information..
+        // 登录可以查看信息的帐户密码。
         servletRegistration.addInitParameter("loginUsername", "admin");
         servletRegistration.addInitParameter("loginPassword", "123456");
-        //To define whether it possible to reset data?
+        // 定义是否可以重置数据
         servletRegistration.addInitParameter("resetEnable", "false");
         return servletRegistration;
     }
@@ -60,9 +60,9 @@ public class DruidConfig {
     @Bean
     public FilterRegistrationBean filterRegistrationBean() {
         FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean(new WebStatFilter());
-        //Add filter rule
+        // 添加过滤规则
         filterRegistrationBean.addUrlPatterns("/*");
-        //Add format information that does not need to be ignored.
+        // 添加不需要忽略的格式信息。
         filterRegistrationBean.addInitParameter("exclusions", "*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*");
         return filterRegistrationBean;
     }

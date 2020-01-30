@@ -1,6 +1,5 @@
 package com.zmz.app.infrastructure.repository.impl;
 
-
 import com.zmz.app.domain.model.UserModel;
 import com.zmz.app.domain.repository.UserRepository;
 import com.zmz.app.infrastructure.dao.entity.UserEntity;
@@ -19,6 +18,7 @@ import java.util.List;
  * @create 2020-01-03 22:55
  */
 @Repository
+@DataSource(DataSourceEnum.MASTER)
 public class UserRepositoryImpl implements UserRepository {
 
     @Resource
@@ -39,18 +39,9 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
-    @DataSource(DataSourceEnum.MASTER)
     public void create(UserModel userModel) {
         UserEntity userEntity = userTranslator.VO2E(null,userModel);
-        try{
-            userMapper.insert(userEntity);
-            //人为产生异常
-//            int i = 4/0;
-        }catch(Exception e){
-            e.printStackTrace();
-            //抛出Exception异常
-            throw new RuntimeException  ("人为产生异常");
-        }
+        userMapper.insert(userEntity);
     }
 
     @Override
@@ -62,7 +53,6 @@ public class UserRepositoryImpl implements UserRepository {
     public void updateUser(UserModel userModel) {
         UserEntity userEntity = userTranslator.VO2E(null,userModel);
         userMapper.updateByPrimaryKeySelective(userEntity);
-//        int s =1/0;
     }
 
 }
