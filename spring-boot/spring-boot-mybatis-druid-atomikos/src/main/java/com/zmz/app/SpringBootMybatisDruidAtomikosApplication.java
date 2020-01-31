@@ -18,7 +18,7 @@ public class SpringBootMybatisDruidAtomikosApplication {
     public static void main(String[] args) {
         log.debug("Application.main.begin");
         SpringApplication.run(SpringBootMybatisDruidAtomikosApplication.class,args);
-        log.info("Application.main.completed");
+        log.debug("Application.main.completed");
     }
 
 }
