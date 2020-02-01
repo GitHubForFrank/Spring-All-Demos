@@ -74,7 +74,7 @@ server:
 logging:
   config: classpath:logback-config.xml
   file:
-    name: spring-boot-logback
+    name: spring-boot-kafka
     path: ../logs/app
   level:
     root: debug
