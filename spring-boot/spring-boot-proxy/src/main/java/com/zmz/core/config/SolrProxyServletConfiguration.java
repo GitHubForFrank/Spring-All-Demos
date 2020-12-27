@@ -39,12 +39,19 @@ public class SolrProxyServletConfiguration {
     }
 
     @Bean
-    public ServletRegistrationBean proxyServletRegistration2(){
+    public ServletRegistrationBean proxyServletRegistration(){
         ServletRegistrationBean registrationBean = new ServletRegistrationBean(createProxyServlet(), servletUrl);
-        //设置网址以及参数
+        // 设置网址以及参数
+        // targetUri 代理目标（目标）URI的参数名称
+        // log 布尔参数名称，用于将输入URL和目标URL记录到servlet日志中
+        // preserveHost 一个布尔参数名称，用于保持HOST参数不变
+        // http.protocol.handle-redirects 一个布尔参数名称，具有自动处理重定向的布尔参数名称
         Map<String, String> params = ImmutableMap.of(
                 "targetUri", targetUrl,
-                "log", "true");
+                "log", "true",
+                "preserveHost","false",
+                "http.protocol.handle-redirects","false"
+        );
         registrationBean.setInitParameters(params);
         return registrationBean;
     }
