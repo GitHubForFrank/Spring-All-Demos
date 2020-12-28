@@ -9,8 +9,8 @@ import org.springframework.context.annotation.ComponentScan;
 /**
  * Refer : https://blog.csdn.net/jimo_lonely/article/details/106006432
  *
- * http://localhost:10190/zuul/swagger-ui.html
- * http://localhost:10190/zuul/api/app1
+ * swagger-ui 页面 : http://localhost:10190/zuul/swagger-ui.html
+ * 进入eureka注册中心查看服务 : http://localhost:10190/
  *
  * @author ASNPHDG
  * @create 2020-01-26 21:31
