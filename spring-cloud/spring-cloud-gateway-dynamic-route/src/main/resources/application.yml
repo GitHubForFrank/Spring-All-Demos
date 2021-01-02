@@ -1,0 +1,46 @@
+# Below is for Server and Tomcat config
+server:
+  port: 10100
+  servlet:
+    context-path: /gateway/dynamic/route
+  tomcat:
+    accesslog:
+      directory: access
+      enabled: true
+      pattern: '%t %a "%r" %s (%D ms)'
+    basedir: ../logs/tomcat
+    max-threads: 800
+    uri-encoding: UTF-8
+  ssl:
+    key-alias: 1
+    key-store: classpath:https/xgfe-pos-sit-ssl-keystore.jks
+    key-store-password: xgfessl10000
+    key-store-type: JKS
+    trust-store: classpath:https/cacerts
+    trust-store-password: changeit
+    trust-store-type: JKS
+
+spring:
+  profiles:
+    active: dev
+  application:
+    name: gateway-dynamic-route
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          # 服务名小写
+          lower-case-service-id: true
+
+# 注册中心
+eureka:
+  instance:
+    instance-id: ${spring.cloud.client.ip-address}:${spring.application.name}:${server.port}
+  client:
+    service-url:
+      defaultZone: http://localhost:10101/eureka/gateway/dynamic/route
+
+feign:
+  hystrix:
+    enabled: true
