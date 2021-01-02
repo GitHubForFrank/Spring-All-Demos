@@ -1,0 +1,149 @@
+# Below is for Server config
+server:
+  port: 10190
+  servlet:
+    context-path: /gateway
+#  ssl:
+#    key-alias: 1
+#    key-store: classpath:https/xgfe-pos-sit-ssl-keystore.jks
+#    key-store-password: xgfessl10000
+#    key-store-type: JKS
+#    trust-store: classpath:https/cacerts
+#    trust-store-password: changeit
+#    trust-store-type: JKS
+
+spring:
+  profiles:
+    active: dev
+  application:
+    name: gateway-service
+  redis:
+    host: localhost
+  freemarker:
+    template-loader-path: classpath:/templates/
+    prefer-file-system-access: false
+
+#  1)前端请求时path带/gateway/,在gateway层使用StripPrefix=1，去掉gateway,最终微服务上的path不带"/gateway/". 注意本server的 context-path 是 gateway
+#  2)使用Hystrix实现默认降级策略
+#  3)uri 的值中的 lb代表从注册中心获取服务，例如 uri: lb://APP01
+  cloud:
+    gateway:
+      httpclient:
+        ssl:
+          key-store: classpath:https/xgfe-pos-sit-ssl-keystore.jks
+          key-store-password: xgfessl10000
+          key-store-type: JKS
+          #本地测试localhost的时候可以使用 useInsecureTrustManager : true
+          useInsecureTrustManager : true
+          # SIT环境访问API GW 应该需要需要使用如下 trustedX509Certificates,如下文件需要使用绝对路径
+#          trustedX509Certificates:
+#            - Issuing-CA.cer
+#            - Root-CA.cer
+          handshake-timeout-millis: 10000
+          close-notify-flush-timeout-millis: 3000
+          close-notify-read-timeout-millis: 0
+      discovery:
+        locator:
+          #是否适用默认路由(通过gatewayUri:port/服务名/path直接访问服务接口)
+          enabled: false
+          #开启小写验证，默认feign根据服务名查找都是用的全大写
+          lowerCaseServiceId: true
+      default-filters:
+        - AddResponseHeader=X-Response-Default-Foo, Default-Bar
+      routes:
+        - id: APP01
+          uri: http://localhost:10990
+          predicates:
+            # 转发该路径
+            - Path=/gateway/app01/**
+          # 带前缀
+          filters:
+            - StripPrefix=1
+            - name: Hystrix
+              args:
+                name: fallbackcmd
+                fallbackUri: forward:/defaultfallback
+        - id: APP02
+          uri: https://localhost:10991
+          predicates:
+            - Path=/gateway/https/app01/**
+          filters:
+            - StripPrefix=2
+            - name: Hystrix
+              args:
+                name: fallbackcmd
+                fallbackUri: forward:/defaultfallback
+        - id: APP03
+          uri: http://hkdcwtlbrm010:10190
+          predicates:
+            - Path=/gateway/pos/ec/**
+          filters:
+            - StripPrefix=1
+            - name: Hystrix
+              args:
+                name: fallbackcmd
+                fallbackUri: forward:/defaultfallback
+        - id: APP04
+          uri: https://aiahk-apigw2-sit.aia.biz:8556/gateway
+          predicates:
+            - Path=/gateway/xgfe-uam-sybase/v3/**
+          filters:
+            - StripPrefix=1
+            - name: Hystrix
+              args:
+                name: fallbackcmd
+                fallbackUri: forward:/defaultfallback
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# hystrix 信号量隔离，3秒后自动超时
+hystrix:
+  command:
+    default:
+      execution:
+        isolation:
+          strategy: SEMAPHORE
+          thread:
+            timeoutInMilliseconds: 3000
+  shareSecurityContext: true
+
+
+# 注册中心
+eureka:
+  instance:
+    hostname: localhost
+    prefer-ip-address: false
+    instance-id: ${spring.cloud.client.ip-address}:${spring.application.name}:${server.port}
+  client:
+    # 在默认设置下，Eureka服务注册中心也会将自己作为客户端来尝试注册它自己，所以我们需要禁用它的客户端注册行为
+    registerWithEureka: false
+    fetchRegistry: false
+    service-url:
+      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka
+
+# 暴露端点
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+  endpoint:
+    health:
+      show-details: always
+
+# 打印网关日志信息
+logging:
+  level:
+    org.springframework.cloud.gateway: debug
+

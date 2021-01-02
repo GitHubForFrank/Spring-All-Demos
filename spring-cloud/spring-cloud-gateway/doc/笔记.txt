@@ -1,0 +1,15 @@
+参考的网站 : https://www.cnblogs.com/holddie/p/14202072.html
+
+
+访问 http://localhost:10190/gateway/app01/EmpEntity/query
+路由 -->     http://localhost:10990/app01/EmpEntity/query
+
+访问 http://localhost:10190/gateway/https/app01/EmpEntity/query
+路由 -->           https://localhost:10990/app01/EmpEntity/query
+
+访问 http://localhost:10190/gateway/pos/ec/ping
+路由 --> http://hkdcwtlbrm010:10190/pos/ec/ping
+
+访问                   http://localhost:10190/gateway/xgfe-uam-sybase/v3/**
+路由 -->https://aiahk-apigw2-sit.aia.biz:8556/gateway/xgfe-uam-sybase/v3/**
+
