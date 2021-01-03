@@ -126,10 +126,12 @@ eureka:
     prefer-ip-address: false
     instance-id: ${spring.cloud.client.ip-address}:${spring.application.name}:${server.port}
   client:
-    # 在默认设置下，Eureka服务注册中心也会将自己作为客户端来尝试注册它自己，所以我们需要禁用它的客户端注册行为
+    #不把自己（eureka-server）注册到eureka上（不做高可用的情况下）
     registerWithEureka: false
+    #不从eureka上来获取服务的注册信息（因为本身就是注册中心，消费者就需要获取提供者的信息）
     fetchRegistry: false
     service-url:
+      #不指定默认为 http://localhost:8761/eureka.client/
       defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka
 
 # 暴露端点
