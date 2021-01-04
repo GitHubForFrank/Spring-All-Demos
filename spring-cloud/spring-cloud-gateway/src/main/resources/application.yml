@@ -84,9 +84,9 @@ spring:
                 name: fallbackcmd
                 fallbackUri: forward:/defaultfallback
         - id: APP04
-          uri: https://aiahk-apigw2-sit.aia.biz:8556/gateway
+          uri: https://aiahk-apigw2-sit.aia.biz:8556
           predicates:
-            - Path=/gateway/xgfe-uam-sybase/v3/**
+            - Path=/gateway/gateway/xgfe-uam-sybase/v3/**
           filters:
             - StripPrefix=1
             - name: Hystrix
